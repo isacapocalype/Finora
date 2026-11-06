@@ -669,6 +669,10 @@
   gap: 16px;
 }
 
+.form-grid-spaced {
+  margin-top: 16px;
+}
+
 .form-field-full {
   grid-column: 1 / -1;
 }
@@ -1158,17 +1162,20 @@ body.modal-open {
 
 .skeleton-text {
   height: 10px;
+  width: var(--skeleton-width, 100%);
+  margin-top: var(--skeleton-margin-top, 0);
 }
 
 .skeleton-title {
-  width: 55%;
-  height: 15px;
+  width: var(--skeleton-title-width, 55%);
+  height: var(--skeleton-title-height, 15px);
+  margin-top: var(--skeleton-title-margin-top, 0);
 }
 
 .skeleton-circle {
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
+  width: var(--skeleton-size, 42px);
+  height: var(--skeleton-size, 42px);
+  border-radius: var(--skeleton-radius, 13px);
 }
 
 .skeleton-block {
@@ -1323,6 +1330,7 @@ body.modal-open {
 }
 
 .progress-bar {
+  width: var(--progress, 0%);
   height: 100%;
   background: linear-gradient(90deg, #8b5cf6, #6d28d9);
   border-radius: inherit;

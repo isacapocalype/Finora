@@ -369,7 +369,7 @@ function renderSavingsCard(item) {
 
       <div class="saving-progress">
         <div class="progress">
-          <div class="progress-bar" style="width:${visualProgress}%"></div>
+          <div class="progress-bar" style="--progress: ${visualProgress}%"></div>
         </div>
         <div class="progress-meta">
           <span>Progress tabungan</span>
@@ -609,7 +609,7 @@ function openTransaction(record, type) {
         </div>
       </div>
 
-      <form id="savings-transaction-form" class="form-grid" style="margin-top: 16px;" novalidate>
+      <form id="savings-transaction-form" class="form-grid form-grid-spaced" novalidate>
         <div class="form-field form-field-full">
           <label for="savings-transaction-amount">Nominal ${isWithdrawal ? 'penarikan' : 'setoran'}</label>
           <div class="input-wrap has-prefix">
@@ -726,10 +726,10 @@ function openDetail(record) {
       <div class="saving-detail-header">
         <span class="saving-icon">${icon('piggy-bank')}</span>
         <div>
-          <h3 class="saving-name" style="margin-top: 0">${escapeHtml(
+          <h3 class="saving-name">${escapeHtml(
             record.name
           )}</h3>
-          <p class="muted" style="font-size: 11.5px">${escapeHtml(
+          <p class="muted">${escapeHtml(
             record.description || 'Tanpa deskripsi'
           )}</p>
         </div>
@@ -764,7 +764,7 @@ function openDetail(record) {
 
       <div class="saving-detail-progress">
         <div class="progress">
-          <div class="progress-bar" style="width:${visualProgress}%"></div>
+          <div class="progress-bar" style="--progress: ${visualProgress}%"></div>
         </div>
         <div class="progress-meta">
           <span>${

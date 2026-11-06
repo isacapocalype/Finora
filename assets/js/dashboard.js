@@ -70,17 +70,17 @@ function bindRangeButtons() {
 function renderLoadingState() {
   summaryLoading(elements.summary, 4);
   elements.comparison.innerHTML = `
-    <div class="skeleton skeleton-circle" style="width:150px;height:150px;border-radius:50%"></div>
+    <div class="skeleton skeleton-circle" style="--skeleton-size: 150px; --skeleton-radius: 50px"></div>
     <div class="comparison-legend">
-      <span class="skeleton skeleton-text" style="width:80%"></span>
-      <span class="skeleton skeleton-text" style="width:60%"></span>
-      <span class="skeleton skeleton-text" style="width:70%"></span>
+      <span class="skeleton skeleton-text" style="--skeleton-width: 80%"></span>
+      <span class="skeleton skeleton-text" style="--skeleton-width: 60%"></span>
+      <span class="skeleton skeleton-text" style="--skeleton-width: 70%"></span>
     </div>
   `;
   elements.activeSavings.innerHTML = `
-    <span class="skeleton skeleton-text" style="width:90%"></span>
+    <span class="skeleton skeleton-text" style="--skeleton-width: 90%"></span>
     <span class="skeleton skeleton-block"></span>
-    <span class="skeleton skeleton-text" style="width:70%;margin-top:10px"></span>
+    <span class="skeleton skeleton-text" style="--skeleton-width: 70%; --skeleton-margin-top: 10px"></span>
     <span class="skeleton skeleton-block"></span>
   `;
   elements.recent.innerHTML = tableSkeleton(4, 4);
@@ -270,7 +270,7 @@ function renderActiveSavings(activeSavings) {
             <span>${percentage}%</span>
           </div>
           <div class="progress">
-            <div class="progress-bar" style="width:${visualProgress}%"></div>
+            <div class="progress-bar" style="--progress: ${visualProgress}%"></div>
           </div>
           <div class="active-saving-meta">
             <span>${formatCurrency(item.current_amount)} / ${formatCurrency(

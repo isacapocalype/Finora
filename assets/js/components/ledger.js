@@ -585,7 +585,7 @@ export function createLedgerPage(config) {
           </div>
         </div>
 
-        <form id="payment-form" class="form-grid" style="margin-top: 16px;" novalidate>
+        <form id="payment-form" class="form-grid form-grid-spaced" novalidate>
           <div class="form-field form-field-full">
             <label for="payment-amount">Nominal ${escapeHtml(config.labels.paymentNoun)}</label>
             <div class="input-wrap has-prefix">

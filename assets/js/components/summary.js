@@ -48,13 +48,13 @@ export function summaryLoading(container, count = 4) {
     () => `
       <div class="glass-card stat-card" aria-hidden="true">
         <div class="stat-top">
-          <div style="width: 100%">
-            <span class="skeleton skeleton-text" style="width: 48%"></span>
-            <span class="skeleton skeleton-title" style="width: 72%; height: 22px; margin-top: 11px"></span>
+          <div>
+            <span class="skeleton skeleton-text" style="--skeleton-width: 48%"></span>
+            <span class="skeleton skeleton-title" style="--skeleton-title-width: 72%; --skeleton-title-height: 22px; --skeleton-title-margin-top: 11px"></span>
           </div>
           <span class="skeleton skeleton-circle"></span>
         </div>
-        <span class="skeleton skeleton-text" style="width: 62%"></span>
+        <span class="skeleton skeleton-text" style="--skeleton-width: 62%"></span>
       </div>
     `
   ).join('');

@@ -9,7 +9,7 @@ export function tableSkeleton(rowCount = 5, columnCount = 6) {
         ${Array.from(
           { length: columnCount },
           (_, columnIndex) =>
-            `<span class="skeleton skeleton-text" style="width:${55 + ((rowIndex + columnIndex) % 4) * 10}%"></span>`
+            `<span class="skeleton skeleton-text" style="--skeleton-width:${55 + ((rowIndex + columnIndex) % 4) * 10}%"></span>`
         ).join('')}
       </div>
     `

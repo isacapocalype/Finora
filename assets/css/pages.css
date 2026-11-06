@@ -202,6 +202,14 @@
   margin-bottom: 18px;
 }
 
+.saving-detail-header .saving-name {
+  margin-top: 0;
+}
+
+.saving-detail-header .muted {
+  font-size: 11.5px;
+}
+
 .saving-detail-progress {
   margin: 18px 0;
   padding: 15px;
