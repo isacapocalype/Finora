@@ -4,3 +4,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+PRD.md
+Design.md
+ANTI_AI_SLOP.md
+BUILD_WORKFLOW.md
