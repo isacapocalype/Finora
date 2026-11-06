@@ -1,0 +1,67 @@
+/* FINORA — DESIGN TOKENS
+   Sesuai DESIGN.md: putih, ungu, lavender, glassmorphism lembut. */
+
+:root {
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-dark: #5b21b6;
+  --primary-soft: #ede9fe;
+  --lavender: #c4b5fd;
+  --lavender-soft: #f3efff;
+
+  --background: #f8f7fc;
+  --surface: #ffffff;
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(255, 255, 255, 0.88);
+
+  --text-primary: #25213a;
+  --text-secondary: #817b91;
+  --text-muted: #a6a1b2;
+
+  --border: #ece8f3;
+  --border-strong: #ddd5ee;
+
+  --success: #16a34a;
+  --success-bg: #dcfce7;
+  --danger: #ef4444;
+  --danger-strong: #dc2626;
+  --danger-bg: #fee2e2;
+  --warning: #f59e0b;
+  --warning-bg: #fef3c7;
+  --info: #3b82f6;
+  --info-bg: #dbeafe;
+
+  --font-sans: "Plus Jakarta Sans", Inter, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 8px 32px rgba(91, 63, 140, 0.06);
+  --shadow-card-hover: 0 14px 38px rgba(91, 63, 140, 0.1);
+  --shadow-float: 0 20px 60px rgba(54, 28, 101, 0.18);
+  --shadow-focus: 0 0 0 4px rgba(124, 58, 237, 0.14);
+
+  --transition: 200ms ease;
+  --transition-fast: 140ms ease;
+
+  --sidebar-width: 250px;
+  --content-max-width: 1440px;
+  --bottom-nav-height: 68px;
+
+  --z-sidebar: 20;
+  --z-header: 30;
+  --z-bottom-nav: 40;
+  --z-sheet: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    scroll-behavior: smooth;
+  }
+}

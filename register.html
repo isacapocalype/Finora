@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Buat akun Finora untuk mulai mengelola utang, piutang, dan tabungan pribadi.">
+  <meta name="theme-color" content="#7C3AED">
+  <title>Daftar — Finora</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/variables.css">
+  <link rel="stylesheet" href="assets/css/reset.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1.69.0/dist/umd/lucide.js" defer></script>
+</head>
+<body class="auth-body" data-auth-page="register">
+  <main class="auth-shell">
+    <section class="auth-brand-panel" aria-labelledby="auth-brand-title">
+      <div class="auth-brand-top">
+        <a class="brand brand-inverse" href="index.html" aria-label="Finora">
+          <img class="brand-logo" src="assets/images/logo.svg" alt="" width="42" height="42">
+          <span class="brand-name">Finora</span>
+        </a>
+        <p class="auth-brand-tagline">Manage Money, Build Your Future.</p>
+      </div>
+
+      <div class="auth-brand-copy">
+        <p class="eyebrow eyebrow-inverse">Mulai dari satu catatan</p>
+        <h1 id="auth-brand-title">Bangun kebiasaan keuangan yang lebih sehat.</h1>
+        <p>Finora membantumu melihat kondisi utang, piutang, dan tabungan dalam satu dashboard yang ringkas.</p>
+
+        <ul class="auth-feature-list">
+          <li>
+            <span class="auth-feature-icon"><i data-lucide="shield-check" aria-hidden="true"></i></span>
+            <span><strong>Akun pribadi</strong><small>Setiap pengguna memiliki data yang terpisah.</small></span>
+          </li>
+          <li>
+            <span class="auth-feature-icon"><i data-lucide="target" aria-hidden="true"></i></span>
+            <span><strong>Target tabungan</strong><small>Pantau persentase dan saldo secara otomatis.</small></span>
+          </li>
+          <li>
+            <span class="auth-feature-icon"><i data-lucide="history" aria-hidden="true"></i></span>
+            <span><strong>Riwayat lengkap</strong><small>Semua pembayaran dan setoran tercatat rapi.</small></span>
+          </li>
+        </ul>
+      </div>
+
+      <p class="auth-brand-footer">Finora — Manage Money, Build Your Future.</p>
+    </section>
+
+    <section class="auth-form-panel">
+      <div class="auth-form-wrap glass-card">
+        <div data-auth-default>
+          <div class="auth-heading">
+            <span class="auth-icon"><i data-lucide="user-plus" aria-hidden="true"></i></span>
+            <h2>Buat akun Finora</h2>
+            <p>Gratis, dan datamu tetap milikmu.</p>
+          </div>
+
+          <div class="notice notice-warning" data-config-notice hidden>
+            <strong>Supabase belum dikonfigurasi</strong>
+            <p>Isi <code>assets/js/config.js</code> dengan Project URL dan Publishable Key dari Supabase.</p>
+          </div>
+
+          <div id="auth-message" class="form-status" role="alert" hidden></div>
+
+          <form id="register-form" class="auth-form" novalidate>
+            <div class="form-field">
+              <label for="register-name">Nama lengkap</label>
+              <div class="input-wrap has-icon">
+                <span class="input-icon"><i data-lucide="user" aria-hidden="true"></i></span>
+                <input class="input" id="register-name" name="fullName" type="text" autocomplete="name" placeholder="Nama kamu" maxlength="120" required>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="register-email">Email</label>
+              <div class="input-wrap has-icon">
+                <span class="input-icon"><i data-lucide="mail" aria-hidden="true"></i></span>
+                <input class="input" id="register-email" name="email" type="email" autocomplete="email" placeholder="nama@email.com" required>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="register-password">Password</label>
+              <div class="input-wrap has-icon has-action">
+                <span class="input-icon"><i data-lucide="lock" aria-hidden="true"></i></span>
+                <input class="input" id="register-password" name="password" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter" minlength="8" required>
+                <button type="button" class="input-action" data-password-toggle="register-password" aria-label="Tampilkan password" aria-pressed="false">
+                  <i data-lucide="eye" aria-hidden="true"></i>
+                </button>
+              </div>
+              <p class="field-hint">Gunakan minimal 8 karakter.</p>
+            </div>
+
+            <div class="form-field">
+              <label for="register-confirm">Konfirmasi password</label>
+              <div class="input-wrap has-icon has-action">
+                <span class="input-icon"><i data-lucide="lock-keyhole" aria-hidden="true"></i></span>
+                <input class="input" id="register-confirm" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Ulangi password" minlength="8" required>
+                <button type="button" class="input-action" data-password-toggle="register-confirm" aria-label="Tampilkan password" aria-pressed="false">
+                  <i data-lucide="eye" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-block" type="submit">Daftar sekarang</button>
+          </form>
+
+          <p class="auth-switch">Sudah punya akun? <a href="login.html">Masuk</a></p>
+        </div>
+
+        <div id="register-success" class="auth-success" hidden>
+          <span class="auth-success-icon"><i data-lucide="mail-check" aria-hidden="true"></i></span>
+          <h2>Periksa email kamu</h2>
+          <p>Kami mengirim tautan verifikasi ke <strong data-register-email></strong>. Klik tautan tersebut sebelum masuk ke Finora.</p>
+          <a class="btn btn-primary btn-block" href="login.html">Kembali ke halaman masuk</a>
+        </div>
+      </div>
+      <p class="auth-legal">Dengan mendaftar, kamu setuju menggunakan Finora untuk pencatatan keuangan pribadi.</p>
+    </section>
+  </main>
+
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+  <script type="module" src="assets/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "finora",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Finora — personal finance tracker built with HTML, CSS, vanilla JavaScript, and Supabase.",
+  "scripts": {
+    "dev": "python3 -m http.server 4173",
+    "test": "npm run test:sql && npm run test:utils && npm run test:structure",
+    "test:sql": "node tests/sql.test.mjs",
+    "test:utils": "node --test tests/utils.test.mjs",
+    "test:structure": "node tests/structure.test.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15"
+  }
+}

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dashboard Finora — ringkasan utang, piutang, tabungan, dan transaksi terbaru.">
+  <meta name="theme-color" content="#7C3AED">
+  <title>Dashboard — Finora</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/reset.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="dashboard">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar" aria-label="Navigasi samping"></aside>
+
+    <div class="app-main">
+      <header class="app-header">
+        <div>
+          <p class="page-eyebrow">Dashboard</p>
+          <h1 class="page-title"><span id="dashboard-greeting">Selamat datang</span>, <span data-user-first-name>Pengguna</span> 👋</h1>
+          <p class="page-subtitle" id="dashboard-date">Berikut ringkasan keuanganmu hari ini.</p>
+        </div>
+        <div class="header-actions">
+          <a class="header-profile" href="settings.html" aria-label="Buka pengaturan akun">
+            <span class="avatar" data-user-initials>FN</span>
+            <span class="header-profile-meta">
+              <strong data-user-name>Pengguna Finora</strong>
+              <small>Pengaturan</small>
+            </span>
+          </a>
+        </div>
+      </header>
+
+      <main id="page-content" class="page-content">
+        <section id="dashboard-summary" class="summary-grid" aria-label="Ringkasan keuangan" aria-live="polite"></section>
+
+        <div class="dashboard-main-grid">
+          <section class="glass-card card chart-card">
+            <div class="card-header">
+              <div>
+                <h2>Perkembangan Tabungan</h2>
+                <p>Saldo kumulatif dari seluruh target tabungan.</p>
+              </div>
+              <div class="segmented" role="group" aria-label="Periode grafik tabungan">
+                <button type="button" data-chart-range="monthly" class="is-active" aria-pressed="true">Bulanan</button>
+                <button type="button" data-chart-range="weekly" aria-pressed="false">Mingguan</button>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="savings-chart" aria-label="Grafik perkembangan tabungan" role="img"></canvas>
+            </div>
+          </section>
+
+          <section class="glass-card card quick-actions-card">
+            <div class="card-header">
+              <div>
+                <h2>Quick Actions</h2>
+                <p>Akses cepat untuk mencatat aktivitas.</p>
+              </div>
+            </div>
+            <div class="quick-actions">
+              <a class="quick-action" href="debts.html?action=create">
+                <span class="quick-action-icon"><i data-lucide="plus" aria-hidden="true"></i></span>
+                <span class="quick-action-meta"><strong>Tambah Utang</strong><small>Catat pinjaman baru</small></span>
+                <span class="quick-action-arrow"><i data-lucide="chevron-right" aria-hidden="true"></i></span>
+              </a>
+              <a class="quick-action" href="receivables.html?action=create">
+                <span class="quick-action-icon"><i data-lucide="plus" aria-hidden="true"></i></span>
+                <span class="quick-action-meta"><strong>Tambah Piutang</strong><small>Catat uang yang dipinjamkan</small></span>
+                <span class="quick-action-arrow"><i data-lucide="chevron-right" aria-hidden="true"></i></span>
+              </a>
+              <a class="quick-action" href="savings.html?action=create">
+                <span class="quick-action-icon"><i data-lucide="piggy-bank" aria-hidden="true"></i></span>
+                <span class="quick-action-meta"><strong>Buat Tabungan</strong><small>Mulai target baru</small></span>
+                <span class="quick-action-arrow"><i data-lucide="chevron-right" aria-hidden="true"></i></span>
+              </a>
+              <a class="quick-action" href="debts.html?action=pay">
+                <span class="quick-action-icon"><i data-lucide="hand-coins" aria-hidden="true"></i></span>
+                <span class="quick-action-meta"><strong>Catat Pembayaran</strong><small>Bayar utang aktif</small></span>
+                <span class="quick-action-arrow"><i data-lucide="chevron-right" aria-hidden="true"></i></span>
+              </a>
+              <a class="quick-action" href="savings.html?action=deposit">
+                <span class="quick-action-icon"><i data-lucide="banknote" aria-hidden="true"></i></span>
+                <span class="quick-action-meta"><strong>Catat Setoran</strong><small>Tambah saldo tabungan</small></span>
+                <span class="quick-action-arrow"><i data-lucide="chevron-right" aria-hidden="true"></i></span>
+              </a>
+            </div>
+            <p class="quick-actions-note">Semua transaksi disimpan langsung ke database Supabase milikmu.</p>
+          </section>
+        </div>
+
+        <div class="dashboard-secondary-grid">
+          <section class="glass-card card">
+            <div class="card-header">
+              <div>
+                <h2>Utang &amp; Piutang</h2>
+                <p>Perbandingan sisa kewajiban dan hak.</p>
+              </div>
+            </div>
+            <div id="comparison-body" class="comparison-body" aria-live="polite"></div>
+          </section>
+
+          <section class="glass-card card">
+            <div class="card-header">
+              <div>
+                <h2>Target Tabungan Aktif</h2>
+                <p>Target yang belum tercapai.</p>
+              </div>
+              <a class="card-link" href="savings.html">Lihat semua <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <div id="active-savings" class="active-savings" aria-live="polite"></div>
+          </section>
+        </div>
+
+        <section class="glass-card card">
+          <div class="card-header">
+            <div>
+              <h2>Transaksi Terbaru</h2>
+              <p>Enam aktivitas keuangan terakhir.</p>
+            </div>
+            <a class="card-link" href="history.html">Lihat riwayat <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+          </div>
+          <div id="dashboard-recent" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <nav id="bottom-nav" class="bottom-nav" aria-label="Navigasi bawah"></nav>
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1.69.0/dist/umd/lucide.js"></script>
+  <script type="module" src="../assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Finora — kelola utang, piutang, dan tabungan pribadi dalam satu dashboard.">
+  <meta name="theme-color" content="#7C3AED">
+  <title>Finora — Manage Money, Build Your Future</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/variables.css">
+  <link rel="stylesheet" href="assets/css/reset.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1.69.0/dist/umd/lucide.js" defer></script>
+</head>
+<body class="index-body">
+  <main class="index-shell">
+    <section class="index-content" aria-labelledby="index-title">
+      <img class="index-logo" src="assets/images/logo.svg" alt="" width="72" height="72">
+      <p class="eyebrow">Personal Finance Tracker</p>
+      <h1 id="index-title">Finora</h1>
+      <p class="index-tagline">Manage Money, Build Your Future.</p>
+
+      <div class="index-loader" aria-label="Memuat aplikasi">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Menyiapkan dashboard kamu...</span>
+      </div>
+
+      <div id="index-status" class="index-status" role="alert"></div>
+      <button id="index-retry" type="button" class="btn btn-secondary" hidden>Muat ulang</button>
+
+      <noscript>
+        <p class="notice notice-warning">Finora membutuhkan JavaScript untuk berjalan. Aktifkan JavaScript di browser Anda.</p>
+      </noscript>
+    </section>
+  </main>
+  <script type="module" src="assets/js/index.js"></script>
+</body>
+</html>

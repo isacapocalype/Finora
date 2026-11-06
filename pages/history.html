@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Riwayat seluruh aktivitas utang, piutang, dan tabungan di Finora.">
+  <meta name="theme-color" content="#7C3AED">
+  <title>Riwayat Transaksi — Finora</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/reset.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="history">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar" aria-label="Navigasi samping"></aside>
+
+    <div class="app-main">
+      <header class="app-header">
+        <div>
+          <p class="page-eyebrow">Aktivitas</p>
+          <h1 class="page-title">Riwayat Transaksi</h1>
+          <p class="page-subtitle">Seluruh pencatatan keuanganmu dalam satu tempat.</p>
+        </div>
+      </header>
+
+      <main id="page-content" class="page-content">
+        <section class="glass-card data-card">
+          <div class="filter-tabs" role="group" aria-label="Filter kategori transaksi">
+            <button type="button" class="filter-tab is-active" data-history-group="all" aria-pressed="true">Semua</button>
+            <button type="button" class="filter-tab" data-history-group="debts" aria-pressed="false">Utang</button>
+            <button type="button" class="filter-tab" data-history-group="receivables" aria-pressed="false">Piutang</button>
+            <button type="button" class="filter-tab" data-history-group="savings" aria-pressed="false">Tabungan</button>
+          </div>
+
+          <div class="toolbar history-toolbar">
+            <div class="search-field input-wrap has-icon">
+              <span class="input-icon"><i data-lucide="search" aria-hidden="true"></i></span>
+              <input class="input" id="history-search" type="search" placeholder="Cari transaksi..." aria-label="Cari transaksi">
+            </div>
+            <div class="filter-dates">
+              <div class="date-field">
+                <label for="history-from">Dari</label>
+                <input class="input" id="history-from" type="date" aria-label="Tanggal mulai">
+              </div>
+              <div class="date-field">
+                <label for="history-to">Sampai</label>
+                <input class="input" id="history-to" type="date" aria-label="Tanggal akhir">
+              </div>
+            </div>
+            <select class="select" id="history-sort" aria-label="Urutkan transaksi">
+              <option value="newest">Terbaru</option>
+              <option value="oldest">Terlama</option>
+              <option value="amount_desc">Nominal terbesar</option>
+              <option value="amount_asc">Nominal terkecil</option>
+            </select>
+            <button type="button" class="btn btn-secondary btn-sm" id="history-reset">
+              <i data-lucide="rotate-ccw" aria-hidden="true"></i>
+              <span>Reset</span>
+            </button>
+          </div>
+
+          <div class="history-summary">
+            <span id="history-result-count">Memuat riwayat...</span>
+            <span class="muted">Data diambil dari seluruh modul keuangan.</span>
+          </div>
+
+          <div id="history-list" aria-live="polite"></div>
+          <div id="history-pagination"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <nav id="bottom-nav" class="bottom-nav" aria-label="Navigasi bawah"></nav>
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1.69.0/dist/umd/lucide.js"></script>
+  <script type="module" src="../assets/js/app.js"></script>
+</body>
+</html>

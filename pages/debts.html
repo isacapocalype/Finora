@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Catat dan kelola utang pribadi di Finora.">
+  <meta name="theme-color" content="#7C3AED">
+  <title>Utang — Finora</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/reset.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="debts">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar" aria-label="Navigasi samping"></aside>
+
+    <div class="app-main">
+      <header class="app-header">
+        <div>
+          <p class="page-eyebrow">Keuangan</p>
+          <h1 class="page-title">Manajemen Utang</h1>
+          <p class="page-subtitle">Catat pinjaman, pembayaran, dan sisa kewajibanmu.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-ledger-add>
+          <i data-lucide="plus" aria-hidden="true"></i>
+          <span>Tambah Utang</span>
+        </button>
+      </header>
+
+      <main id="page-content" class="page-content">
+        <section id="ledger-summary" class="summary-grid" aria-label="Ringkasan utang" aria-live="polite"></section>
+
+        <section class="glass-card data-card">
+          <div class="data-card-header">
+            <div>
+              <h2>Daftar Utang</h2>
+              <p id="ledger-result-count" class="refresh-note">Memuat data...</p>
+            </div>
+            <button type="button" class="icon-button" id="ledger-refresh" aria-label="Muat ulang data utang" title="Muat ulang">
+              <i data-lucide="refresh-cw" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="toolbar">
+            <div class="search-field input-wrap has-icon">
+              <span class="input-icon"><i data-lucide="search" aria-hidden="true"></i></span>
+              <input class="input" id="ledger-search" type="search" placeholder="Cari nama pemberi pinjaman..." aria-label="Cari utang berdasarkan nama pemberi pinjaman">
+            </div>
+            <select class="select" id="ledger-status-filter" aria-label="Filter status utang">
+              <option value="all">Semua status</option>
+              <option value="unpaid">Belum dibayar</option>
+              <option value="partial">Dibayar sebagian</option>
+              <option value="paid">Lunas</option>
+            </select>
+          </div>
+
+          <div id="ledger-table" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <nav id="bottom-nav" class="bottom-nav" aria-label="Navigasi bawah"></nav>
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1.69.0/dist/umd/lucide.js"></script>
+  <script type="module" src="../assets/js/app.js"></script>
+</body>
+</html>

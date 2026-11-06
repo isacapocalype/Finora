@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kelola profil, keamanan, dan preferensi akun Finora.">
+  <meta name="theme-color" content="#7C3AED">
+  <title>Pengaturan — Finora</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/reset.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="settings">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar" aria-label="Navigasi samping"></aside>
+
+    <div class="app-main">
+      <header class="app-header">
+        <div>
+          <p class="page-eyebrow">Akun</p>
+          <h1 class="page-title">Pengaturan</h1>
+          <p class="page-subtitle">Kelola profil, keamanan, dan preferensi akunmu.</p>
+        </div>
+      </header>
+
+      <main id="page-content" class="page-content">
+        <div class="settings-grid">
+          <div class="settings-stack">
+            <section class="glass-card settings-card">
+              <div class="settings-card-header">
+                <h2><i data-lucide="user-round" aria-hidden="true"></i> Profil Pengguna</h2>
+                <p>Nama ini tampil pada sidebar dan sapaan dashboard.</p>
+              </div>
+
+              <div class="profile-hero">
+                <span class="avatar" data-user-initials>FN</span>
+                <div>
+                  <strong data-user-name>Pengguna Finora</strong>
+                  <small data-user-email>email@contoh.com</small>
+                </div>
+              </div>
+
+              <form id="profile-form" class="settings-form" novalidate>
+                <div class="form-field">
+                  <label for="profile-name">Nama lengkap</label>
+                  <input class="input" id="profile-name" name="fullName" type="text" maxlength="120" autocomplete="name" required>
+                </div>
+
+                <div class="form-field">
+                  <label for="profile-email">Email</label>
+                  <input class="input" id="profile-email" name="email" type="email" readonly>
+                  <p class="field-hint">Email digunakan untuk masuk dan tidak dapat diubah dari halaman ini.</p>
+                </div>
+
+                <div id="profile-message" class="form-status" role="alert" hidden></div>
+
+                <div>
+                  <button type="submit" class="btn btn-primary" id="profile-submit">
+                    <i data-lucide="save" aria-hidden="true"></i>
+                    <span>Simpan Profil</span>
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section class="glass-card settings-card">
+              <div class="settings-card-header">
+                <h2><i data-lucide="lock-keyhole" aria-hidden="true"></i> Keamanan Akun</h2>
+                <p>Ganti password secara berkala untuk menjaga akun.</p>
+              </div>
+
+              <form id="password-form" class="settings-form" novalidate>
+                <div class="form-field">
+                  <label for="password-new">Password baru</label>
+                  <div class="input-wrap has-icon has-action">
+                    <span class="input-icon"><i data-lucide="lock" aria-hidden="true"></i></span>
+                    <input class="input" id="password-new" name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Minimal 8 karakter" required>
+                    <button type="button" class="input-action" data-password-toggle="password-new" aria-label="Tampilkan password" aria-pressed="false">
+                      <i data-lucide="eye" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="password-confirm">Konfirmasi password baru</label>
+                  <div class="input-wrap has-icon has-action">
+                    <span class="input-icon"><i data-lucide="lock-keyhole" aria-hidden="true"></i></span>
+                    <input class="input" id="password-confirm" name="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Ulangi password baru" required>
+                    <button type="button" class="input-action" data-password-toggle="password-confirm" aria-label="Tampilkan password" aria-pressed="false">
+                      <i data-lucide="eye" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div id="password-message" class="form-status" role="alert" hidden></div>
+
+                <div>
+                  <button type="submit" class="btn btn-primary" id="password-submit">
+                    <i data-lucide="key-round" aria-hidden="true"></i>
+                    <span>Perbarui Password</span>
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+
+          <div class="settings-stack">
+            <section class="glass-card settings-card">
+              <div class="settings-card-header">
+                <h2><i data-lucide="sliders-horizontal" aria-hidden="true"></i> Preferensi</h2>
+                <p>Pengaturan tampilan dan mata uang.</p>
+              </div>
+
+              <div class="preference-row">
+                <div>
+                  <strong>Mata uang</strong>
+                  <small>Format nominal seluruh aplikasi.</small>
+                </div>
+                <span class="preference-value">IDR — Rupiah</span>
+              </div>
+
+              <div class="preference-row">
+                <div>
+                  <strong>Tema tampilan</strong>
+                  <small>Finora saat ini menggunakan tema terang.</small>
+                </div>
+                <span class="badge badge-purple">Light</span>
+              </div>
+
+              <div class="preference-row">
+                <div>
+                  <strong>Zona data</strong>
+                  <small>Data disimpan pada project Supabase yang terhubung.</small>
+                </div>
+                <span class="preference-value">Supabase</span>
+              </div>
+            </section>
+
+            <section class="logout-card">
+              <div>
+                <strong>Keluar dari akun</strong>
+                <small>Akhiri sesi pada perangkat ini.</small>
+              </div>
+              <button type="button" class="btn btn-danger" data-logout>
+                <i data-lucide="log-out" aria-hidden="true"></i>
+                <span>Logout</span>
+              </button>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <nav id="bottom-nav" class="bottom-nav" aria-label="Navigasi bawah"></nav>
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1.69.0/dist/umd/lucide.js"></script>
+  <script type="module" src="../assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kelola target tabungan, setoran, dan penarikan di Finora.">
+  <meta name="theme-color" content="#7C3AED">
+  <title>Tabungan — Finora</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/reset.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="savings">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar" aria-label="Navigasi samping"></aside>
+
+    <div class="app-main">
+      <header class="app-header">
+        <div>
+          <p class="page-eyebrow">Target Keuangan</p>
+          <h1 class="page-title">Tabungan</h1>
+          <p class="page-subtitle">Bangun saldo dan capai target tabunganmu.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-savings-add>
+          <i data-lucide="plus" aria-hidden="true"></i>
+          <span>Buat Tabungan</span>
+        </button>
+      </header>
+
+      <main id="page-content" class="page-content">
+        <section id="savings-summary" class="summary-grid" aria-label="Ringkasan tabungan" aria-live="polite"></section>
+
+        <div class="toolbar">
+          <div class="search-field input-wrap has-icon">
+            <span class="input-icon"><i data-lucide="search" aria-hidden="true"></i></span>
+            <input class="input" id="savings-search" type="search" placeholder="Cari nama target tabungan..." aria-label="Cari target tabungan">
+          </div>
+          <button type="button" class="icon-button" id="savings-refresh" aria-label="Muat ulang data tabungan" title="Muat ulang">
+            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+          </button>
+          <span class="toolbar-spacer"></span>
+          <span id="savings-result-count" class="result-count"></span>
+        </div>
+
+        <section id="savings-grid" class="savings-grid" aria-label="Daftar tabungan" aria-live="polite"></section>
+      </main>
+    </div>
+  </div>
+
+  <nav id="bottom-nav" class="bottom-nav" aria-label="Navigasi bawah"></nav>
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1.69.0/dist/umd/lucide.js"></script>
+  <script type="module" src="../assets/js/app.js"></script>
+</body>
+</html>
