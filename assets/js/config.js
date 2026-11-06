@@ -14,7 +14,7 @@ export const SUPABASE_ANON_KEY = String(
 ).trim();
 
 export const isSupabaseConfigured =
-  SUPABASE_URL.startsWith('https://') &&
+  SUPABASE_URL.startsWith('https://falbyiisuuzpskosfdrt.supabase.co') &&
   !SUPABASE_URL.includes('YOUR_SUPABASE') &&
   SUPABASE_ANON_KEY.length > 20 &&
-  !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE');
+  !SUPABASE_ANON_KEY.includes('sb_publishable_xxzYNfbmg4pnGS78H5esIg_ETiKR3sp');
