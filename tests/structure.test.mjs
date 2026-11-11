@@ -189,7 +189,7 @@ test('semua import lokal JavaScript menunjuk file yang ada', async () => {
     );
 
     for (const specifier of imports) {
-      if (/^(https?:|node:)/.test(specifier)) {
+      if (/^(https?:|node:|@)/.test(specifier)) {
         continue;
       }
 

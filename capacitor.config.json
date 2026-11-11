@@ -1,0 +1,17 @@
+{
+  "appId": "com.finora.app",
+  "appName": "Finora",
+  "webDir": "www",
+  "plugins": {
+    "@capacitor/status-bar": {
+      "enabled": true
+    },
+    "@capacitor/network": {
+      "enabled": true
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureLinks": true
+  }
+}

@@ -6,12 +6,28 @@
   "description": "Finora — personal finance tracker built with HTML, CSS, vanilla JavaScript, and Supabase.",
   "scripts": {
     "dev": "python3 -m http.server 4173",
+    "build:vendor": "esbuild assets/js/supabase.js --bundle --format=esm --outfile=assets/vendor/supabase.bundle.js --define:process.env.NODE_ENV='\"production\"' --platform=browser",
+    "build:www": "node scripts/build-www.mjs",
+    "build": "npm run build:vendor && npm run build:www",
+    "cap:add": "npx cap add android",
+    "cap:sync": "npx cap sync android",
+    "cap:build": "npx cap build android",
     "test": "npm run test:sql && npm run test:utils && npm run test:structure",
     "test:sql": "node tests/sql.test.mjs",
     "test:utils": "node --test tests/utils.test.mjs",
     "test:structure": "node tests/structure.test.mjs"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.15"
+    "@electric-sql/pglite": "^0.5.15",
+    "@supabase/supabase-js": "^2.119.0",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.4",
+    "@fontsource/plus-jakarta-sans": "^5.3.0"
   }
 }

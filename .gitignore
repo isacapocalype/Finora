@@ -9,3 +9,12 @@ Design.md
 ANTI_AI_SLOP.md
 BUILD_WORKFLOW.md
 assets/js/config.js
+www/
+.gradle/
+android/.gradle/
+android/local.properties
+local.properties
+*.keystore
+keystore.properties
+android/app/build/
+build/

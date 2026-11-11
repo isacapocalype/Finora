@@ -1,6 +1,46 @@
 /* FINORA — DESIGN TOKENS
    Sesuai DESIGN.md: putih, ungu, lavender, glassmorphism lembut. */
 
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../fonts/plus-jakarta-sans-latin-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('../fonts/plus-jakarta-sans-latin-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('../fonts/plus-jakarta-sans-latin-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('../fonts/plus-jakarta-sans-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 800;
+  src: url('../fonts/plus-jakarta-sans-latin-800.woff2') format('woff2');
+}
+
 :root {
   --primary: #7c3aed;
   --primary-hover: #6d28d9;
