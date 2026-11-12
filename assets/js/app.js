@@ -4,6 +4,9 @@ import { getOrCreateProfile } from './services/profile.service.js';
 import { renderLayout } from './components/layout.js';
 import { icon, refreshIcons } from './icons.js';
 import { escapeHtml, getErrorMessage } from './utils.js';
+import { initializeOfflineSync } from './offline/sync.js';
+import { initOfflineUI } from './offline/ui.js';
+import { initNativeShell } from './native.js';
 
 const PAGE_LOADERS = {
   dashboard: () => import('./dashboard.js'),
@@ -92,6 +95,17 @@ async function bootstrap() {
     user: session.user,
     profile,
     activePage: page
+  });
+
+  initOfflineUI(session.user.id);
+
+  initializeOfflineSync(session.user.id).catch((error) => {
+    console.warn('Offline cache initialization failed:', error);
+  });
+
+  initNativeShell({
+    activePage: page,
+    userId: session.user.id
   });
 
   onAuthStateChange((event) => {

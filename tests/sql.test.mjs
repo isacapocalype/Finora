@@ -393,6 +393,93 @@ test('FINORA database schema, RLS, dan RPC keuangan', async (t) => {
     });
   });
 
+  await t.test('RPC pembayaran idempoten tidak menggandakan saldo', async () => {
+    const debtClientId = '33333333-3333-4333-8333-333333333331';
+    const receivableClientId = '33333333-3333-4333-8333-333333333332';
+    const savingsClientId = '33333333-3333-4333-8333-333333333333';
+
+    await runAs(USER_A, async () => {
+      const debt = await db.query(
+        `insert into public.debts (user_id, lender_name, amount, transaction_date)
+         values ($1, 'Idempotensi Utang', 400, '2026-02-01')
+         returning id`,
+        [USER_A]
+      );
+
+      const first = await db.query(
+        `select public.record_debt_payment($1, $2, $3, $4, $5) as id`,
+        [debt.rows[0].id, 400, '2026-02-02', 'Sekali bayar', debtClientId]
+      );
+      const second = await db.query(
+        `select public.record_debt_payment($1, $2, $3, $4, $5) as id`,
+        [debt.rows[0].id, 400, '2026-02-02', 'Sekali bayar', debtClientId]
+      );
+
+      assert.equal(first.rows[0].id, debtClientId);
+      assert.equal(second.rows[0].id, debtClientId);
+
+      const debtState = await db.query(
+        'select paid_amount, status from public.debts where id = $1',
+        [debt.rows[0].id]
+      );
+      assert.equal(debtState.rows[0].paid_amount, '400.00');
+      assert.equal(debtState.rows[0].status, 'paid');
+
+      const paymentRows = await db.query(
+        'select count(*)::int as total from public.debt_payments where id = $1',
+        [debtClientId]
+      );
+      assert.equal(paymentRows.rows[0].total, 1);
+
+      const receivable = await db.query(
+        `insert into public.receivables (user_id, borrower_name, amount, transaction_date)
+         values ($1, 'Idempotensi Piutang', 300, '2026-02-01')
+         returning id`,
+        [USER_A]
+      );
+
+      await db.query(
+        `select public.record_receivable_payment($1, $2, $3, $4, $5)`,
+        [receivable.rows[0].id, 300, '2026-02-02', 'Sekali kembali', receivableClientId]
+      );
+      const receivableSecond = await db.query(
+        `select public.record_receivable_payment($1, $2, $3, $4, $5) as id`,
+        [receivable.rows[0].id, 300, '2026-02-02', 'Sekali kembali', receivableClientId]
+      );
+      assert.equal(receivableSecond.rows[0].id, receivableClientId);
+
+      const receivableState = await db.query(
+        'select received_amount, status from public.receivables where id = $1',
+        [receivable.rows[0].id]
+      );
+      assert.equal(receivableState.rows[0].received_amount, '300.00');
+      assert.equal(receivableState.rows[0].status, 'paid');
+
+      const savings = await db.query(
+        `insert into public.savings (user_id, name, target_amount, start_date)
+         values ($1, 'Idempotensi Tabungan', 1000, '2026-02-01')
+         returning id`,
+        [USER_A]
+      );
+
+      await db.query(
+        `select public.record_savings_transaction($1, 'deposit', $2, $3, $4, $5)`,
+        [savings.rows[0].id, 150, '2026-02-02', 'Sekali setor', savingsClientId]
+      );
+      const savingsSecond = await db.query(
+        `select public.record_savings_transaction($1, 'deposit', $2, $3, $4, $5) as id`,
+        [savings.rows[0].id, 150, '2026-02-02', 'Sekali setor', savingsClientId]
+      );
+      assert.equal(savingsSecond.rows[0].id, savingsClientId);
+
+      const savingsState = await db.query(
+        'select current_amount from public.savings where id = $1',
+        [savings.rows[0].id]
+      );
+      assert.equal(savingsState.rows[0].current_amount, '150.00');
+    });
+  });
+
   await t.test('view riwayat hanya menampilkan transaksi milik pengguna', async () => {
     await runAs(USER_A, async () => {
       const history = await db.query(

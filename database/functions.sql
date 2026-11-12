@@ -185,11 +185,14 @@ create trigger savings_guard
 -- =========================================================
 -- RPC: RECORD DEBT PAYMENT
 -- =========================================================
+drop function if exists public.record_debt_payment(uuid, numeric, date, text);
+
 create or replace function public.record_debt_payment(
   p_debt_id uuid,
   p_amount numeric,
   p_payment_date date default current_date,
-  p_description text default null
+  p_description text default null,
+  p_client_id uuid default gen_random_uuid()
 )
 returns uuid
 language plpgsql
@@ -198,7 +201,9 @@ set search_path = public, pg_temp
 as $$
 declare
   v_user_id uuid := auth.uid();
+  v_client_id uuid := coalesce(p_client_id, gen_random_uuid());
   v_debt public.debts%rowtype;
+  v_existing_user uuid;
   v_payment_id uuid;
   v_amount numeric(15, 2);
   v_remaining numeric(15, 2);
@@ -206,6 +211,20 @@ begin
   if v_user_id is null then
     raise exception 'Sesi tidak valid. Silakan masuk kembali.'
       using errcode = '42501';
+  end if;
+
+  select user_id
+    into v_existing_user
+  from public.debt_payments
+  where id = v_client_id;
+
+  if found then
+    if v_existing_user = v_user_id then
+      return v_client_id;
+    end if;
+
+    raise exception 'ID pembayaran sudah digunakan.'
+      using errcode = '23505';
   end if;
 
   v_amount := round(coalesce(p_amount, 0), 2);
@@ -245,6 +264,7 @@ begin
   end if;
 
   insert into public.debt_payments (
+    id,
     debt_id,
     user_id,
     amount,
@@ -252,13 +272,30 @@ begin
     description
   )
   values (
+    v_client_id,
     p_debt_id,
     v_user_id,
     v_amount,
     p_payment_date,
     nullif(btrim(coalesce(p_description, '')), '')
   )
+  on conflict (id) do nothing
   returning id into v_payment_id;
+
+  if v_payment_id is null then
+    select id
+      into v_payment_id
+    from public.debt_payments
+    where id = v_client_id
+      and user_id = v_user_id;
+
+    if v_payment_id is null then
+      raise exception 'ID pembayaran sudah digunakan.'
+        using errcode = '23505';
+    end if;
+
+    return v_payment_id;
+  end if;
 
   update public.debts
   set paid_amount = v_debt.paid_amount + v_amount,
@@ -274,17 +311,20 @@ begin
 end;
 $$;
 
-comment on function public.record_debt_payment(uuid, numeric, date, text)
-  is 'Mencatat pembayaran utang secara atomik setelah validasi sisa utang.';
+comment on function public.record_debt_payment(uuid, numeric, date, text, uuid)
+  is 'Mencatat pembayaran utang secara atomik setelah validasi sisa utang. p_client_id membuat pemanggilan ulang aman (idempoten).';
 
 -- =========================================================
 -- RPC: RECORD RECEIVABLE PAYMENT
 -- =========================================================
+drop function if exists public.record_receivable_payment(uuid, numeric, date, text);
+
 create or replace function public.record_receivable_payment(
   p_receivable_id uuid,
   p_amount numeric,
   p_payment_date date default current_date,
-  p_description text default null
+  p_description text default null,
+  p_client_id uuid default gen_random_uuid()
 )
 returns uuid
 language plpgsql
@@ -293,7 +333,9 @@ set search_path = public, pg_temp
 as $$
 declare
   v_user_id uuid := auth.uid();
+  v_client_id uuid := coalesce(p_client_id, gen_random_uuid());
   v_receivable public.receivables%rowtype;
+  v_existing_user uuid;
   v_payment_id uuid;
   v_amount numeric(15, 2);
   v_remaining numeric(15, 2);
@@ -301,6 +343,20 @@ begin
   if v_user_id is null then
     raise exception 'Sesi tidak valid. Silakan masuk kembali.'
       using errcode = '42501';
+  end if;
+
+  select user_id
+    into v_existing_user
+  from public.receivable_payments
+  where id = v_client_id;
+
+  if found then
+    if v_existing_user = v_user_id then
+      return v_client_id;
+    end if;
+
+    raise exception 'ID pengembalian sudah digunakan.'
+      using errcode = '23505';
   end if;
 
   v_amount := round(coalesce(p_amount, 0), 2);
@@ -340,6 +396,7 @@ begin
   end if;
 
   insert into public.receivable_payments (
+    id,
     receivable_id,
     user_id,
     amount,
@@ -347,13 +404,30 @@ begin
     description
   )
   values (
+    v_client_id,
     p_receivable_id,
     v_user_id,
     v_amount,
     p_payment_date,
     nullif(btrim(coalesce(p_description, '')), '')
   )
+  on conflict (id) do nothing
   returning id into v_payment_id;
+
+  if v_payment_id is null then
+    select id
+      into v_payment_id
+    from public.receivable_payments
+    where id = v_client_id
+      and user_id = v_user_id;
+
+    if v_payment_id is null then
+      raise exception 'ID pengembalian sudah digunakan.'
+        using errcode = '23505';
+    end if;
+
+    return v_payment_id;
+  end if;
 
   update public.receivables
   set received_amount = v_receivable.received_amount + v_amount,
@@ -370,18 +444,21 @@ begin
 end;
 $$;
 
-comment on function public.record_receivable_payment(uuid, numeric, date, text)
-  is 'Mencatat pengembalian piutang secara atomik setelah validasi sisa piutang.';
+comment on function public.record_receivable_payment(uuid, numeric, date, text, uuid)
+  is 'Mencatat pengembalian piutang secara atomik setelah validasi sisa piutang. p_client_id membuat pemanggilan ulang aman (idempoten).';
 
 -- =========================================================
 -- RPC: RECORD SAVINGS TRANSACTION
 -- =========================================================
+drop function if exists public.record_savings_transaction(uuid, text, numeric, date, text);
+
 create or replace function public.record_savings_transaction(
   p_savings_id uuid,
   p_type text,
   p_amount numeric,
   p_transaction_date date default current_date,
-  p_description text default null
+  p_description text default null,
+  p_client_id uuid default gen_random_uuid()
 )
 returns uuid
 language plpgsql
@@ -390,7 +467,9 @@ set search_path = public, pg_temp
 as $$
 declare
   v_user_id uuid := auth.uid();
+  v_client_id uuid := coalesce(p_client_id, gen_random_uuid());
   v_savings public.savings%rowtype;
+  v_existing_user uuid;
   v_transaction_id uuid;
   v_type text := lower(btrim(coalesce(p_type, '')));
   v_amount numeric(15, 2);
@@ -398,6 +477,20 @@ begin
   if v_user_id is null then
     raise exception 'Sesi tidak valid. Silakan masuk kembali.'
       using errcode = '42501';
+  end if;
+
+  select user_id
+    into v_existing_user
+  from public.savings_transactions
+  where id = v_client_id;
+
+  if found then
+    if v_existing_user = v_user_id then
+      return v_client_id;
+    end if;
+
+    raise exception 'ID transaksi sudah digunakan.'
+      using errcode = '23505';
   end if;
 
   if v_type not in ('deposit', 'withdrawal') then
@@ -435,6 +528,7 @@ begin
   end if;
 
   insert into public.savings_transactions (
+    id,
     savings_id,
     user_id,
     type,
@@ -443,6 +537,7 @@ begin
     description
   )
   values (
+    v_client_id,
     p_savings_id,
     v_user_id,
     v_type,
@@ -450,7 +545,23 @@ begin
     p_transaction_date,
     nullif(btrim(coalesce(p_description, '')), '')
   )
+  on conflict (id) do nothing
   returning id into v_transaction_id;
+
+  if v_transaction_id is null then
+    select id
+      into v_transaction_id
+    from public.savings_transactions
+    where id = v_client_id
+      and user_id = v_user_id;
+
+    if v_transaction_id is null then
+      raise exception 'ID transaksi sudah digunakan.'
+        using errcode = '23505';
+    end if;
+
+    return v_transaction_id;
+  end if;
 
   update public.savings
   set current_amount = case
@@ -465,5 +576,5 @@ begin
 end;
 $$;
 
-comment on function public.record_savings_transaction(uuid, text, numeric, date, text)
-  is 'Mencatat setoran/penarikan tabungan secara atomik dan menjaga saldo tidak negatif.';
+comment on function public.record_savings_transaction(uuid, text, numeric, date, text, uuid)
+  is 'Mencatat setoran/penarikan tabungan secara atomik dan menjaga saldo tidak negatif. p_client_id membuat pemanggilan ulang aman (idempoten).';

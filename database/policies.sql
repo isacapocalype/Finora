@@ -173,14 +173,14 @@ grant select on public.savings_transactions to authenticated;
 revoke all on public.transaction_history from anon, authenticated;
 grant select on public.transaction_history to authenticated;
 
-revoke all on function public.record_debt_payment(uuid, numeric, date, text) from public;
-grant execute on function public.record_debt_payment(uuid, numeric, date, text) to authenticated;
+revoke all on function public.record_debt_payment(uuid, numeric, date, text, uuid) from public;
+grant execute on function public.record_debt_payment(uuid, numeric, date, text, uuid) to authenticated;
 
-revoke all on function public.record_receivable_payment(uuid, numeric, date, text) from public;
-grant execute on function public.record_receivable_payment(uuid, numeric, date, text) to authenticated;
+revoke all on function public.record_receivable_payment(uuid, numeric, date, text, uuid) from public;
+grant execute on function public.record_receivable_payment(uuid, numeric, date, text, uuid) to authenticated;
 
-revoke all on function public.record_savings_transaction(uuid, text, numeric, date, text) from public;
-grant execute on function public.record_savings_transaction(uuid, text, numeric, date, text) to authenticated;
+revoke all on function public.record_savings_transaction(uuid, text, numeric, date, text, uuid) from public;
+grant execute on function public.record_savings_transaction(uuid, text, numeric, date, text, uuid) to authenticated;
 
 revoke all on function public.handle_new_user() from public;
 revoke all on function public.set_updated_at() from public;

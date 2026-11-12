@@ -20920,7 +20920,7 @@ var SUPABASE_URL = String(
 var SUPABASE_ANON_KEY = String(
   runtimeConfig.SUPABASE_ANON_KEY || "sb_publishable_xxzYNfbmg4pnGS78H5esIg_ETiKR3sp"
 ).trim();
-var isSupabaseConfigured = SUPABASE_URL.startsWith("https://falbyiisuuzpskosfdrt.supabase.co") && !SUPABASE_URL.includes("YOUR_SUPABASE") && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes("YOUR_SUPABASE");
+var isSupabaseConfigured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_SUPABASE") && SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes("YOUR_SUPABASE");
 
 // assets/js/supabase.js
 var isConfigured = isSupabaseConfigured;

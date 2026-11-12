@@ -8,10 +8,16 @@
     },
     "@capacitor/network": {
       "enabled": true
+    },
+    "@capacitor/splash-screen": {
+      "launchShowDuration": 900,
+      "launchAutoHide": true,
+      "backgroundColor": "#F8F7FC",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
     }
   },
   "android": {
-    "allowMixedContent": true,
-    "captureLinks": true
+    "allowMixedContent": true
   }
 }

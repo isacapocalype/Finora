@@ -1,4 +1,7 @@
 import { requireSupabase } from '../supabase.js';
+import { isOnline } from '../offline/network.js';
+import { isNetworkError } from '../offline/errors.js';
+import { readCachedUserRows } from '../offline/db.js';
 import { calcRemaining, parseDate, roundMoney } from '../utils.js';
 import { listRecentHistory } from './history.service.js';
 
@@ -100,49 +103,13 @@ export function buildSavingsSeries(
   };
 }
 
-export async function loadDashboardData(userId) {
-  const supabase = requireSupabase();
-
-  const [debtsResult, receivablesResult, savingsResult, transactionsResult, recent] =
-    await Promise.all([
-      supabase
-        .from('debts')
-        .select('id, amount, paid_amount, status')
-        .eq('user_id', userId),
-      supabase
-        .from('receivables')
-        .select('id, amount, received_amount, status')
-        .eq('user_id', userId),
-      supabase
-        .from('savings')
-        .select('id, name, target_amount, current_amount, target_date')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('savings_transactions')
-        .select('id, type, amount, transaction_date, created_at')
-        .eq('user_id', userId)
-        .order('transaction_date', { ascending: true })
-        .order('created_at', { ascending: true }),
-      listRecentHistory(userId, 6)
-    ]);
-
-  for (const result of [
-    debtsResult,
-    receivablesResult,
-    savingsResult,
-    transactionsResult
-  ]) {
-    if (result.error) {
-      throw result.error;
-    }
-  }
-
-  const debts = debtsResult.data || [];
-  const receivables = receivablesResult.data || [];
-  const savings = savingsResult.data || [];
-  const transactions = transactionsResult.data || [];
-
+export function computeDashboardData({
+  debts = [],
+  receivables = [],
+  savings = [],
+  transactions = [],
+  recent = []
+} = {}) {
   const totalDebt = debts.reduce(
     (total, debt) =>
       total + calcRemaining(debt.amount, debt.paid_amount),
@@ -168,7 +135,7 @@ export async function loadDashboardData(userId) {
       if (!first.target_date && !second.target_date) return 0;
       if (!first.target_date) return 1;
       if (!second.target_date) return -1;
-      return first.target_date.localeCompare(second.target_date);
+      return String(first.target_date).localeCompare(String(second.target_date));
     })
     .slice(0, 4);
 
@@ -195,4 +162,90 @@ export async function loadDashboardData(userId) {
     activeSavings,
     recent
   };
+}
+
+export async function loadDashboardData(userId) {
+  const supabase = requireSupabase();
+
+  let debts = [];
+  let receivables = [];
+  let savings = [];
+  let transactions = [];
+  let recent = [];
+
+  try {
+    const results = await Promise.all([
+      supabase
+        .from('debts')
+        .select('id, user_id, lender_name, amount, paid_amount, status')
+        .eq('user_id', userId),
+      supabase
+        .from('receivables')
+        .select('id, user_id, borrower_name, amount, received_amount, status')
+        .eq('user_id', userId),
+      supabase
+        .from('savings')
+        .select('id, user_id, name, target_amount, current_amount, target_date')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('savings_transactions')
+        .select('id, user_id, type, amount, transaction_date, created_at')
+        .eq('user_id', userId)
+        .order('transaction_date', { ascending: true })
+        .order('created_at', { ascending: true }),
+      listRecentHistory(userId, 6)
+    ]);
+
+    const debtsResult = results[0];
+    const receivablesResult = results[1];
+    const savingsResult = results[2];
+    const transactionsResult = results[3];
+    const recentResult = results[4];
+
+    for (const result of [
+      debtsResult,
+      receivablesResult,
+      savingsResult,
+      transactionsResult
+    ]) {
+      if (result.error) {
+        throw result.error;
+      }
+    }
+
+    debts = debtsResult.data || [];
+    receivables = receivablesResult.data || [];
+    savings = savingsResult.data || [];
+    transactions = transactionsResult.data || [];
+    recent = Array.isArray(recentResult) ? recentResult : [];
+  } catch (error) {
+    if (!isOnline() || isNetworkError(error)) {
+      debts = await readCachedUserRows(userId, 'debts');
+      receivables = await readCachedUserRows(userId, 'receivables');
+      savings = await readCachedUserRows(userId, 'savings');
+      transactions = await readCachedUserRows(userId, 'savings_transactions');
+      recent = (await readCachedUserRows(userId, 'transaction_history'))
+        .sort(
+          (first, second) =>
+            String(second.transaction_date || '').localeCompare(
+              String(first.transaction_date || '')
+            ) ||
+            String(second.created_at || '').localeCompare(
+              String(first.created_at || '')
+            )
+        )
+        .slice(0, 6);
+    } else {
+      throw error;
+    }
+  }
+
+  return computeDashboardData({
+    debts,
+    receivables,
+    savings,
+    transactions,
+    recent
+  });
 }
