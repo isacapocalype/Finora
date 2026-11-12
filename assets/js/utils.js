@@ -374,20 +374,8 @@ export function getErrorMessage(error, fallback = 'Terjadi kesalahan. Silakan co
     return fallback;
   }
 
-  if (/failed to fetch|networkerror|load failed|network error/i.test(message)) {
-    return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
-  }
-
-  if (/jwt|session|refresh token/i.test(message)) {
-    return 'Sesi Anda telah berakhir. Silakan masuk kembali.';
-  }
-
-  if (
-    /duplicate key|violates|relation "|column "|permission denied|schema cache|row-level security|could not find the table/i.test(
-      message
-    )
-  ) {
-    return 'Permintaan tidak dapat diproses. Pastikan database Supabase sudah disiapkan dengan benar.';
+  if (/quota|storage/i.test(message) && /full|penuh|exceed/i.test(message)) {
+    return 'Penyimpanan perangkat penuh. Hapus data lain atau kosongkan ruang, lalu coba lagi.';
   }
 
   return message;

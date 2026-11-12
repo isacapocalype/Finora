@@ -1,5 +1,5 @@
-// FINORA — CLIENT ID
-// UUID v4 untuk idempotensi operasi offline pada WebView lama.
+// FINORA — LOCAL ID
+// UUID v4 untuk identifier data pada WebView lama.
 
 export function createId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {

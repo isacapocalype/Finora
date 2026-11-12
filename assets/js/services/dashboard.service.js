@@ -1,9 +1,10 @@
-import { requireSupabase } from '../supabase.js';
-import { isOnline } from '../offline/network.js';
-import { isNetworkError } from '../offline/errors.js';
-import { readCachedUserRows } from '../offline/db.js';
+// FINORA — DASHBOARD SERVICE (local)
+// Ringkasan dashboard dihitung dari data yang tersimpan di perangkat.
+
+import { readUserRows } from '../storage/db.js';
+import { resolveUserId } from '../local.js';
 import { calcRemaining, parseDate, roundMoney } from '../utils.js';
-import { listRecentHistory } from './history.service.js';
+import { buildHistoryRows } from './history.service.js';
 
 function transactionNet(transaction) {
   const amount = Number(transaction.amount) || 0;
@@ -165,81 +166,40 @@ export function computeDashboardData({
 }
 
 export async function loadDashboardData(userId) {
-  const supabase = requireSupabase();
-
-  let debts = [];
-  let receivables = [];
-  let savings = [];
-  let transactions = [];
-  let recent = [];
-
-  try {
-    const results = await Promise.all([
-      supabase
-        .from('debts')
-        .select('id, user_id, lender_name, amount, paid_amount, status')
-        .eq('user_id', userId),
-      supabase
-        .from('receivables')
-        .select('id, user_id, borrower_name, amount, received_amount, status')
-        .eq('user_id', userId),
-      supabase
-        .from('savings')
-        .select('id, user_id, name, target_amount, current_amount, target_date')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('savings_transactions')
-        .select('id, user_id, type, amount, transaction_date, created_at')
-        .eq('user_id', userId)
-        .order('transaction_date', { ascending: true })
-        .order('created_at', { ascending: true }),
-      listRecentHistory(userId, 6)
-    ]);
-
-    const debtsResult = results[0];
-    const receivablesResult = results[1];
-    const savingsResult = results[2];
-    const transactionsResult = results[3];
-    const recentResult = results[4];
-
-    for (const result of [
-      debtsResult,
-      receivablesResult,
-      savingsResult,
-      transactionsResult
-    ]) {
-      if (result.error) {
-        throw result.error;
-      }
-    }
-
-    debts = debtsResult.data || [];
-    receivables = receivablesResult.data || [];
-    savings = savingsResult.data || [];
-    transactions = transactionsResult.data || [];
-    recent = Array.isArray(recentResult) ? recentResult : [];
-  } catch (error) {
-    if (!isOnline() || isNetworkError(error)) {
-      debts = await readCachedUserRows(userId, 'debts');
-      receivables = await readCachedUserRows(userId, 'receivables');
-      savings = await readCachedUserRows(userId, 'savings');
-      transactions = await readCachedUserRows(userId, 'savings_transactions');
-      recent = (await readCachedUserRows(userId, 'transaction_history'))
-        .sort(
-          (first, second) =>
-            String(second.transaction_date || '').localeCompare(
-              String(first.transaction_date || '')
-            ) ||
-            String(second.created_at || '').localeCompare(
-              String(first.created_at || '')
-            )
+  const ownerId = resolveUserId(userId);
+  const [
+    debts,
+    debtPayments,
+    receivables,
+    receivablePayments,
+    savings,
+    transactions
+  ] = await Promise.all([
+    readUserRows(ownerId, 'debts'),
+    readUserRows(ownerId, 'debt_payments'),
+    readUserRows(ownerId, 'receivables'),
+    readUserRows(ownerId, 'receivable_payments'),
+    readUserRows(ownerId, 'savings'),
+    readUserRows(ownerId, 'savings_transactions')
+  ]);
+  const recent = buildHistoryRows({
+    debts,
+    debtPayments,
+    receivables,
+    receivablePayments,
+    savings,
+    savingsTransactions: transactions
+  })
+    .sort(
+      (first, second) =>
+        String(second.transaction_date || '').localeCompare(
+          String(first.transaction_date || '')
+        ) ||
+        String(second.created_at || '').localeCompare(
+          String(first.created_at || '')
         )
-        .slice(0, 6);
-    } else {
-      throw error;
-    }
-  }
+    )
+    .slice(0, 6);
 
   return computeDashboardData({
     debts,

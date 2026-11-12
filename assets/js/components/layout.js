@@ -1,7 +1,5 @@
 import { escapeHtml, getInitials } from '../utils.js';
 import { icon, refreshIcons } from '../icons.js';
-import { signOut } from '../services/auth.service.js';
-import { showToast } from './toast.js';
 
 const NAV_ITEMS = [
   { page: 'dashboard', href: 'dashboard.html', label: 'Dashboard', icon: 'layout-dashboard' },
@@ -19,15 +17,12 @@ const BOTTOM_ITEMS = [
   { page: 'savings', href: 'savings.html', label: 'Tabungan', icon: 'piggy-bank' }
 ];
 
-let logoutInProgress = false;
 let sheetListenersBound = false;
 
-export function renderLayout({ user, profile, activePage }) {
+export function renderLayout({ profile, activePage }) {
   const sidebar = document.getElementById('sidebar');
   const bottomNav = document.getElementById('bottom-nav');
-  const displayName =
-    profile?.full_name || user?.user_metadata?.full_name || user?.email || 'Pengguna Finora';
-  const email = user?.email || '';
+  const displayName = profile?.full_name || 'Pengguna Finora';
   const initials = getInitials(displayName);
 
   if (sidebar) {
@@ -55,13 +50,9 @@ export function renderLayout({ user, profile, activePage }) {
           <span class="avatar" data-user-initials>${escapeHtml(initials)}</span>
           <span class="user-card-meta">
             <strong data-user-name>${escapeHtml(displayName)}</strong>
-            <small data-user-email>${escapeHtml(email)}</small>
+            <small>Data lokal</small>
           </span>
         </a>
-        <button type="button" class="btn btn-ghost sidebar-logout" data-logout>
-          ${icon('log-out')}
-          <span>Keluar</span>
-        </button>
       </div>
     `;
   }
@@ -89,23 +80,17 @@ export function renderLayout({ user, profile, activePage }) {
     `;
   }
 
-  renderIdentity({ user, profile });
+  renderIdentity({ profile });
   ensureMobileSheet();
-  bindLogoutButtons();
   refreshIcons();
 }
 
-export function renderIdentity({ user, profile }) {
-  const displayName =
-    profile?.full_name || user?.user_metadata?.full_name || user?.email || 'Pengguna Finora';
-  const email = user?.email || '';
+export function renderIdentity({ profile }) {
+  const displayName = profile?.full_name || 'Pengguna Finora';
   const initials = getInitials(displayName);
 
   document.querySelectorAll('[data-user-name]').forEach((element) => {
     element.textContent = displayName;
-  });
-  document.querySelectorAll('[data-user-email]').forEach((element) => {
-    element.textContent = email;
   });
   document.querySelectorAll('[data-user-initials]').forEach((element) => {
     element.textContent = initials;
@@ -130,14 +115,12 @@ function ensureMobileSheet() {
     <div class="mobile-sheet-panel" role="dialog" aria-modal="true" aria-label="Menu lainnya">
       <span class="sheet-handle" aria-hidden="true"></span>
       <a class="sheet-link" href="history.html">${icon('history')}<span>Riwayat Transaksi</span></a>
-      <a class="sheet-link" href="settings.html">${icon('settings')}<span>Pengaturan Akun</span></a>
-      <button type="button" class="sheet-link sheet-logout" data-logout>${icon('log-out')}<span>Keluar</span></button>
+      <a class="sheet-link" href="settings.html">${icon('settings')}<span>Pengaturan</span></a>
     </div>
   `;
 
   document.body.appendChild(sheet);
   bindSheetListeners();
-  bindLogoutButtons();
 }
 
 function bindSheetListeners() {
@@ -145,14 +128,15 @@ function bindSheetListeners() {
     return;
   }
 
-  sheetListenersBound = true;
   const sheet = document.getElementById('mobile-sheet');
   const moreButton = document.querySelector('[data-more-menu]');
-  let closeTimer = null;
 
   if (!sheet || !moreButton) {
     return;
   }
+
+  sheetListenersBound = true;
+  let closeTimer = null;
 
   moreButton.addEventListener('click', () => {
     openSheet();
@@ -187,43 +171,5 @@ function bindSheetListeners() {
     closeTimer = globalThis.setTimeout(() => {
       sheet.hidden = true;
     }, 220);
-  }
-}
-
-function bindLogoutButtons() {
-  document.querySelectorAll('[data-logout]').forEach((button) => {
-    if (button.dataset.logoutBound === 'true') {
-      return;
-    }
-
-    button.dataset.logoutBound = 'true';
-    button.addEventListener('click', handleLogout);
-  });
-}
-
-async function handleLogout(event) {
-  if (logoutInProgress) {
-    return;
-  }
-
-  logoutInProgress = true;
-  const buttons = document.querySelectorAll('[data-logout]');
-
-  buttons.forEach((button) => {
-    button.disabled = true;
-    button.setAttribute('aria-busy', 'true');
-  });
-
-  try {
-    await signOut();
-    window.location.replace(new URL('../login.html', window.location.href).href);
-  } catch (error) {
-    console.error('Failed to sign out:', error);
-    showToast('Gagal keluar dari akun. Silakan coba lagi.', 'error');
-    logoutInProgress = false;
-    buttons.forEach((button) => {
-      button.disabled = false;
-      button.removeAttribute('aria-busy');
-    });
   }
 }

@@ -398,7 +398,7 @@ export function createLedgerPage(config) {
     const modal = openModal({
       title: isEdit ? config.labels.editTitle : config.labels.addTitle,
       description: isEdit
-        ? `Perbarui data ${config.entityName}. Perubahan langsung tersimpan di database.`
+        ? `Perbarui data ${config.entityName}. Perubahan langsung tersimpan di perangkat.`
         : config.labels.formDescription,
       size: 'md',
       body: `

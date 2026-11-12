@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Kelola profil, keamanan, dan preferensi akun Finora.">
+  <meta name="description" content="Kelola profil dan penyimpanan lokal aplikasi Finora.">
   <meta name="theme-color" content="#7C3AED">
-  <script type="importmap">{"imports":{"@supabase/supabase-js":"/assets/vendor/supabase.bundle.js"}}</script>
   <title>Pengaturan — Finora</title>
   <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
   <link rel="stylesheet" href="../assets/css/variables.css">
@@ -23,9 +22,9 @@
     <div class="app-main">
       <header class="app-header">
         <div>
-          <p class="page-eyebrow">Akun</p>
+          <p class="page-eyebrow">Perangkat</p>
           <h1 class="page-title">Pengaturan</h1>
-          <p class="page-subtitle">Kelola profil, keamanan, dan preferensi akunmu.</p>
+          <p class="page-subtitle">Kelola profil dan informasi penyimpanan lokal.</p>
         </div>
       </header>
 
@@ -42,7 +41,7 @@
                 <span class="avatar" data-user-initials>FN</span>
                 <div>
                   <strong data-user-name>Pengguna Finora</strong>
-                  <small data-user-email>email@contoh.com</small>
+                  <small>Data tersimpan di perangkat ini</small>
                 </div>
               </div>
 
@@ -52,58 +51,12 @@
                   <input class="input" id="profile-name" name="fullName" type="text" maxlength="120" autocomplete="name" required>
                 </div>
 
-                <div class="form-field">
-                  <label for="profile-email">Email</label>
-                  <input class="input" id="profile-email" name="email" type="email" readonly>
-                  <p class="field-hint">Email digunakan untuk masuk dan tidak dapat diubah dari halaman ini.</p>
-                </div>
-
                 <div id="profile-message" class="form-status" role="alert" hidden></div>
 
                 <div>
                   <button type="submit" class="btn btn-primary" id="profile-submit">
                     <i data-lucide="save" aria-hidden="true"></i>
                     <span>Simpan Profil</span>
-                  </button>
-                </div>
-              </form>
-            </section>
-
-            <section class="glass-card settings-card">
-              <div class="settings-card-header">
-                <h2><i data-lucide="lock-keyhole" aria-hidden="true"></i> Keamanan Akun</h2>
-                <p>Ganti password secara berkala untuk menjaga akun.</p>
-              </div>
-
-              <form id="password-form" class="settings-form" novalidate>
-                <div class="form-field">
-                  <label for="password-new">Password baru</label>
-                  <div class="input-wrap has-icon has-action">
-                    <span class="input-icon"><i data-lucide="lock" aria-hidden="true"></i></span>
-                    <input class="input" id="password-new" name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Minimal 8 karakter" required>
-                    <button type="button" class="input-action" data-password-toggle="password-new" aria-label="Tampilkan password" aria-pressed="false">
-                      <i data-lucide="eye" aria-hidden="true"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="form-field">
-                  <label for="password-confirm">Konfirmasi password baru</label>
-                  <div class="input-wrap has-icon has-action">
-                    <span class="input-icon"><i data-lucide="lock-keyhole" aria-hidden="true"></i></span>
-                    <input class="input" id="password-confirm" name="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Ulangi password baru" required>
-                    <button type="button" class="input-action" data-password-toggle="password-confirm" aria-label="Tampilkan password" aria-pressed="false">
-                      <i data-lucide="eye" aria-hidden="true"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <div id="password-message" class="form-status" role="alert" hidden></div>
-
-                <div>
-                  <button type="submit" class="btn btn-primary" id="password-submit">
-                    <i data-lucide="key-round" aria-hidden="true"></i>
-                    <span>Perbarui Password</span>
                   </button>
                 </div>
               </form>
@@ -135,22 +88,33 @@
 
               <div class="preference-row">
                 <div>
-                  <strong>Zona data</strong>
-                  <small>Data disimpan pada project Supabase yang terhubung.</small>
+                  <strong>Penyimpanan</strong>
+                  <small>Seluruh data disimpan di penyimpanan aplikasi pada perangkat ini.</small>
                 </div>
-                <span class="preference-value">Supabase</span>
+                <span class="preference-value">Lokal</span>
               </div>
             </section>
 
-            <section class="logout-card">
-              <div>
-                <strong>Keluar dari akun</strong>
-                <small>Akhiri sesi pada perangkat ini.</small>
+            <section class="glass-card settings-card">
+              <div class="settings-card-header">
+                <h2><i data-lucide="shield-check" aria-hidden="true"></i> Data Lokal</h2>
+                <p>Finora berjalan tanpa akun dan tanpa server.</p>
               </div>
-              <button type="button" class="btn btn-danger" data-logout>
-                <i data-lucide="log-out" aria-hidden="true"></i>
-                <span>Logout</span>
-              </button>
+
+              <div class="preference-row">
+                <div>
+                  <strong>Tidak ada sinkronisasi</strong>
+                  <small>Data tidak dikirim ke internet dan hanya dapat dibuka dari perangkat ini.</small>
+                </div>
+                <span class="badge badge-purple">Lokal</span>
+              </div>
+
+              <div class="preference-row">
+                <div>
+                  <strong>Cadangan</strong>
+                  <small>Menghapus aplikasi atau membersihkan data aplikasi akan menghapus seluruh catatan secara permanen.</small>
+                </div>
+              </div>
             </section>
           </div>
         </div>

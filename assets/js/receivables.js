@@ -24,7 +24,7 @@ const ledger = createLedgerPage({
     detailTitle: 'Detail Piutang',
     addAction: 'Tambah Piutang',
     formDescription:
-      'Catat piutang baru. Status dan sisa akan dihitung otomatis oleh database.',
+      'Catat piutang baru. Status dan sisa dihitung otomatis oleh aplikasi.',
     personHeader: 'Peminjam',
     personLabel: 'Nama peminjam',
     personPlaceholder: 'Contoh: Siti Aminah',
@@ -37,7 +37,7 @@ const ledger = createLedgerPage({
     paymentAction: 'Catat Pengembalian',
     paymentTitle: 'Catat Pengembalian Piutang',
     paymentDescription:
-      'Pengembalian disimpan secara atomik dan tidak dapat melebihi sisa piutang.',
+      'Pengembalian disimpan secara atomik di perangkat dan tidak dapat melebihi sisa piutang.',
     historyTitle: 'Riwayat Pengembalian',
     historyEmpty: 'Belum ada pengembalian untuk piutang ini.',
     emptyTitle: 'Belum ada piutang',
@@ -56,6 +56,7 @@ const ledger = createLedgerPage({
     listPayments: listReceivablePayments,
     recordPayment: (userId, receivableId, payload) =>
       recordReceivablePayment({
+        userId,
         receivableId,
         amount: payload.amount,
         paymentDate: payload.paymentDate,

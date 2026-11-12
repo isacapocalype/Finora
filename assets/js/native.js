@@ -1,17 +1,14 @@
 // FINORA — NATIVE SHELL
-// Status bar, tombol kembali Android, dan sinkronisasi saat aplikasi kembali aktif.
+// Status bar, tombol kembali Android, dan splash screen.
 
 import {
   App,
   Capacitor,
-  Network,
   SplashScreen,
   StatusBar,
   Style
 } from '../vendor/capacitor.bundle.js';
 import { showToast } from './components/toast.js';
-import { isOnline, setNativeOnline } from './offline/network.js';
-import { syncNow } from './offline/sync.js';
 
 let initialized = false;
 let lastBackPress = 0;
@@ -40,33 +37,13 @@ function closeTopLayer() {
   return false;
 }
 
-export function initNativeShell({ activePage, userId }) {
+export function initNativeShell({ activePage }) {
   if (!Capacitor?.isNativePlatform?.() || initialized) {
     return;
   }
 
   initialized = true;
   configureStatusBar();
-
-  Network.addListener('networkStatusChange', (status) => {
-    const wasOnline = isOnline();
-    setNativeOnline(status.connected);
-
-    if (wasOnline !== status.connected) {
-      window.dispatchEvent(new Event(status.connected ? 'online' : 'offline'));
-    }
-  });
-
-  Network.getStatus()
-    .then((status) => {
-      const wasOnline = isOnline();
-      setNativeOnline(status.connected);
-
-      if (wasOnline !== status.connected) {
-        window.dispatchEvent(new Event(status.connected ? 'online' : 'offline'));
-      }
-    })
-    .catch(() => {});
 
   App.addListener('backButton', async () => {
     if (closeTopLayer()) {
@@ -87,12 +64,6 @@ export function initNativeShell({ activePage, userId }) {
 
     lastBackPress = now;
     showToast('Tekan tombol kembali sekali lagi untuk keluar.', 'info');
-  });
-
-  App.addListener('appStateChange', ({ isActive }) => {
-    if (isActive && userId && isOnline()) {
-      syncNow(userId).catch(() => {});
-    }
   });
 
   SplashScreen.hide().catch(() => {});

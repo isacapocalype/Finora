@@ -576,101 +576,13 @@ var init_web = __esm({
   }
 });
 
-// node_modules/@capacitor/network/dist/esm/web.js
+// node_modules/@capacitor/splash-screen/dist/esm/web.js
 var web_exports2 = {};
 __export(web_exports2, {
-  Network: () => Network,
-  NetworkWeb: () => NetworkWeb
-});
-function translatedConnection() {
-  const connection = window.navigator.connection || window.navigator.mozConnection || window.navigator.webkitConnection;
-  let result = "unknown";
-  const type = connection ? connection.type || connection.effectiveType : null;
-  if (type && typeof type === "string") {
-    switch (type) {
-      // possible type values
-      case "bluetooth":
-      case "cellular":
-        result = "cellular";
-        break;
-      case "none":
-        result = "none";
-        break;
-      case "ethernet":
-      case "wifi":
-      case "wimax":
-        result = "wifi";
-        break;
-      case "other":
-      case "unknown":
-        result = "unknown";
-        break;
-      // possible effectiveType values
-      case "slow-2g":
-      case "2g":
-      case "3g":
-        result = "cellular";
-        break;
-      case "4g":
-        result = "wifi";
-        break;
-      default:
-        break;
-    }
-  }
-  return result;
-}
-var NetworkWeb, Network;
-var init_web2 = __esm({
-  "node_modules/@capacitor/network/dist/esm/web.js"() {
-    init_dist();
-    NetworkWeb = class extends WebPlugin {
-      constructor() {
-        super();
-        this.handleOnline = () => {
-          const connectionType = translatedConnection();
-          const status = {
-            connected: true,
-            connectionType
-          };
-          this.notifyListeners("networkStatusChange", status);
-        };
-        this.handleOffline = () => {
-          const status = {
-            connected: false,
-            connectionType: "none"
-          };
-          this.notifyListeners("networkStatusChange", status);
-        };
-        if (typeof window !== "undefined") {
-          window.addEventListener("online", this.handleOnline);
-          window.addEventListener("offline", this.handleOffline);
-        }
-      }
-      async getStatus() {
-        if (!window.navigator) {
-          throw this.unavailable("Browser does not support the Network Information API");
-        }
-        const connected = window.navigator.onLine;
-        const connectionType = translatedConnection();
-        const status = {
-          connected,
-          connectionType: connected ? connectionType : "none"
-        };
-        return status;
-      }
-    };
-    Network = new NetworkWeb();
-  }
-});
-
-// node_modules/@capacitor/splash-screen/dist/esm/web.js
-var web_exports3 = {};
-__export(web_exports3, {
   SplashScreenWeb: () => SplashScreenWeb
 });
 var SplashScreenWeb;
-var init_web3 = __esm({
+var init_web2 = __esm({
   "node_modules/@capacitor/splash-screen/dist/esm/web.js"() {
     init_dist();
     SplashScreenWeb = class extends WebPlugin {
@@ -693,16 +605,10 @@ var App = registerPlugin("App", {
   web: () => Promise.resolve().then(() => (init_web(), web_exports)).then((m) => new m.AppWeb())
 });
 
-// node_modules/@capacitor/network/dist/esm/index.js
-init_dist();
-var Network2 = registerPlugin("Network", {
-  web: () => Promise.resolve().then(() => (init_web2(), web_exports2)).then((m) => new m.NetworkWeb())
-});
-
 // node_modules/@capacitor/splash-screen/dist/esm/index.js
 init_dist();
 var SplashScreen = registerPlugin("SplashScreen", {
-  web: () => Promise.resolve().then(() => (init_web3(), web_exports3)).then((m) => new m.SplashScreenWeb())
+  web: () => Promise.resolve().then(() => (init_web2(), web_exports2)).then((m) => new m.SplashScreenWeb())
 });
 
 // node_modules/@capacitor/status-bar/dist/esm/index.js
@@ -727,7 +633,6 @@ var StatusBar = registerPlugin("StatusBar");
 export {
   App,
   Capacitor,
-  Network2 as Network,
   SplashScreen,
   StatusBar,
   Style

@@ -688,6 +688,7 @@ function openTransaction(record, type) {
 
     try {
       await recordSavingsTransaction({
+        userId: state.user.id,
         savingsId: record.id,
         type,
         amount: amountResult.value,

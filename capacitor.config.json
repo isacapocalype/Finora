@@ -6,9 +6,6 @@
     "@capacitor/status-bar": {
       "enabled": true
     },
-    "@capacitor/network": {
-      "enabled": true
-    },
     "@capacitor/splash-screen": {
       "launchShowDuration": 900,
       "launchAutoHide": true,

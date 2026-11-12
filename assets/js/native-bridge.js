@@ -3,6 +3,5 @@
 
 export { Capacitor } from '@capacitor/core';
 export { App } from '@capacitor/app';
-export { Network } from '@capacitor/network';
 export { SplashScreen } from '@capacitor/splash-screen';
 export { StatusBar, Style } from '@capacitor/status-bar';

@@ -1,11 +1,8 @@
-import { isConfigured, supabase } from './supabase.js';
-import { getSession, onAuthStateChange } from './services/auth.service.js';
+import { LOCAL_USER } from './local.js';
 import { getOrCreateProfile } from './services/profile.service.js';
 import { renderLayout } from './components/layout.js';
 import { icon, refreshIcons } from './icons.js';
 import { escapeHtml, getErrorMessage } from './utils.js';
-import { initializeOfflineSync } from './offline/sync.js';
-import { initOfflineUI } from './offline/ui.js';
 import { initNativeShell } from './native.js';
 
 const PAGE_LOADERS = {
@@ -18,7 +15,6 @@ const PAGE_LOADERS = {
 };
 
 const page = document.body.dataset.page;
-let redirecting = false;
 
 bootstrap().catch((error) => {
   console.error('Failed to initialize Finora:', error);
@@ -33,16 +29,6 @@ bootstrap().catch((error) => {
 });
 
 async function bootstrap() {
-  if (!isConfigured) {
-    renderFatalError({
-      title: 'Supabase belum dikonfigurasi',
-      message:
-        'Isi SUPABASE_URL dan SUPABASE_ANON_KEY pada assets/js/config.js, lalu muat ulang halaman. Lihat README.md untuk langkah lengkap.',
-      showRetry: true
-    });
-    return;
-  }
-
   const loader = PAGE_LOADERS[page];
 
   if (!loader) {
@@ -54,72 +40,35 @@ async function bootstrap() {
     return;
   }
 
-  let session;
-
-  try {
-    session = await getSession();
-  } catch (error) {
-    console.error('Failed to read auth session:', error);
-
-    renderFatalError({
-      title: 'Sesi tidak dapat diperiksa',
-      message:
-        'Tidak dapat terhubung ke Supabase. Periksa koneksi internet dan konfigurasi project.',
-      showRetry: true
-    });
-    return;
-  }
-
-  if (!session) {
-    redirectToLogin();
-    return;
-  }
-
   let profile;
 
   try {
-    profile = await getOrCreateProfile(session.user);
+    profile = await getOrCreateProfile(LOCAL_USER);
   } catch (error) {
-    console.error('Failed to load profile:', error);
+    console.error('Failed to load local profile:', error);
 
     renderFatalError({
-      title: 'Database belum siap',
+      title: 'Penyimpanan lokal tidak dapat diakses',
       message:
-        'Profil pengguna tidak dapat dimuat. Pastikan schema.sql, functions.sql, dan policies.sql sudah dijalankan di Supabase.',
+        'Finora tidak dapat membuka penyimpanan di perangkat ini. Pastikan penyimpanan tidak penuh, lalu muat ulang aplikasi.',
       showRetry: true
     });
     return;
   }
 
   renderLayout({
-    user: session.user,
     profile,
     activePage: page
   });
 
-  initOfflineUI(session.user.id);
-
-  initializeOfflineSync(session.user.id).catch((error) => {
-    console.warn('Offline cache initialization failed:', error);
-  });
-
-  initNativeShell({
-    activePage: page,
-    userId: session.user.id
-  });
-
-  onAuthStateChange((event) => {
-    if (event === 'SIGNED_OUT') {
-      redirectToLogin();
-    }
-  });
+  initNativeShell({ activePage: page });
 
   try {
     const module = await loader();
 
     if (typeof module.initPage === 'function') {
       await module.initPage({
-        user: session.user,
+        user: LOCAL_USER,
         profile
       });
     }
@@ -149,15 +98,6 @@ async function bootstrap() {
   }
 }
 
-function redirectToLogin() {
-  if (redirecting) {
-    return;
-  }
-
-  redirecting = true;
-  window.location.replace(new URL('../login.html', window.location.href).href);
-}
-
 function renderFatalError({ title, message, showRetry = false, showHome = false }) {
   document.body.className = 'fatal-body';
   document.body.innerHTML = `
@@ -183,7 +123,6 @@ function renderFatalError({ title, message, showRetry = false, showHome = false 
               ? `<a class="btn btn-secondary" href="../pages/dashboard.html">Kembali ke Dashboard</a>`
               : ''
           }
-          <a class="btn btn-secondary" href="../login.html">Halaman Masuk</a>
         </div>
       </section>
     </main>

@@ -8,10 +8,6 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const REQUIRED_FILES = [
   'index.html',
-  'login.html',
-  'register.html',
-  'forgot-password.html',
-  'reset-password.html',
   'pages/dashboard.html',
   'pages/debts.html',
   'pages/receivables.html',
@@ -25,10 +21,11 @@ const REQUIRED_FILES = [
   'assets/css/dashboard.css',
   'assets/css/pages.css',
   'assets/css/responsive.css',
-  'assets/js/config.js',
-  'assets/js/supabase.js',
+  'assets/js/local.js',
+  'assets/js/storage/db.js',
+  'assets/js/storage/id.js',
   'assets/js/app.js',
-  'assets/js/auth.js',
+  'assets/js/index.js',
   'assets/js/dashboard.js',
   'assets/js/debts.js',
   'assets/js/receivables.js',
@@ -42,17 +39,39 @@ const REQUIRED_FILES = [
   'assets/js/components/layout.js',
   'assets/js/components/summary.js',
   'assets/js/components/charts.js',
-  'assets/js/services/auth.service.js',
   'assets/js/services/profile.service.js',
   'assets/js/services/dashboard.service.js',
   'assets/js/services/debt.service.js',
   'assets/js/services/receivable.service.js',
   'assets/js/services/savings.service.js',
   'assets/js/services/history.service.js',
+  'scripts/build-www.mjs',
+  'tests/storage.test.mjs',
+  'tests/utils.test.mjs',
+  'README.md'
+];
+
+// Bagian dari versi cloud/auth yang sudah dihapus. Aplikasi lokal tidak boleh
+// kembali bergantung pada berkas-berkas ini tanpa perubahan arsitektur.
+const REMOVED_PATHS = [
+  'login.html',
+  'register.html',
+  'forgot-password.html',
+  'reset-password.html',
+  'assets/js/auth.js',
+  'assets/js/supabase.js',
+  'assets/js/config.js',
+  'assets/js/services/auth.service.js',
+  'assets/js/offline',
+  'assets/js/offline/db.js',
+  'assets/vendor/supabase.bundle.js',
+  'database',
   'database/schema.sql',
   'database/functions.sql',
   'database/policies.sql',
-  'README.md'
+  'scripts/ensure-config.mjs',
+  'scripts/generate-config.mjs',
+  'tests/sql.test.mjs'
 ];
 
 const PAGE_MODULES = [
@@ -64,10 +83,29 @@ const PAGE_MODULES = [
   'settings'
 ];
 
+const STORE_NAMES = [
+  'profiles',
+  'debts',
+  'debt_payments',
+  'receivables',
+  'receivable_payments',
+  'savings',
+  'savings_transactions'
+];
+
 async function fileExists(relativePath) {
   try {
     const info = await stat(path.join(root, relativePath));
     return info.isFile();
+  } catch {
+    return false;
+  }
+}
+
+async function pathExists(relativePath) {
+  try {
+    await stat(path.join(root, relativePath));
+    return true;
   } catch {
     return false;
   }
@@ -104,6 +142,18 @@ test('seluruh file wajib tersedia', async () => {
   assert.deepEqual(missing, []);
 });
 
+test('berkas login, Supabase, SQL, dan offline lama sudah dihapus', async () => {
+  const existing = [];
+
+  for (const target of REMOVED_PATHS) {
+    if (await pathExists(target)) {
+      existing.push(target);
+    }
+  }
+
+  assert.deepEqual(existing, []);
+});
+
 test('halaman aplikasi memuat aset dan struktur layout yang benar', async () => {
   const htmlFiles = [
     ...(await readdir(root))
@@ -116,10 +166,12 @@ test('halaman aplikasi memuat aset dan struktur layout yang benar', async () => 
     const html = await readFile(path.join(root, file), 'utf8');
 
     assert.match(html, /<html lang="id">/, `${file}: atribut bahasa`);
+    assert.doesNotMatch(html, /type="importmap"/, `${file}: import map`);
+    assert.doesNotMatch(html, /supabase/i, `${file}: referensi Supabase`);
 
     const localRefs = [...html.matchAll(/(?:href|src)="([^"]+)"/g)]
       .map((match) => match[1])
-      .filter((ref) => !/^https?:|^#|^mailto:/.test(ref));
+      .filter((ref) => !/^https?:|^#|^mailto:|^javascript:/.test(ref));
 
     for (const reference of localRefs) {
       const resolved = path.normalize(
@@ -144,25 +196,28 @@ test('halaman aplikasi memuat aset dan struktur layout yang benar', async () => 
     assert.match(html, /id="modal-root"/, `${page}: modal root`);
     assert.match(html, /assets\/js\/app\.js/, `${page}: app module`);
   }
-});
 
-test('halaman autentikasi memakai modul auth', async () => {
-  const authPages = {
-    'login.html': 'login',
-    'register.html': 'register',
-    'forgot-password.html': 'forgot',
-    'reset-password.html': 'reset'
-  };
-
-  for (const [file, page] of Object.entries(authPages)) {
-    const html = await readFile(path.join(root, file), 'utf8');
-    assert.match(html, new RegExp(`data-auth-page="${page}"`), file);
-    assert.match(html, /assets\/js\/auth\.js/, file);
+  for (const page of ['dashboard', 'settings']) {
+    const html = await readFile(path.join(root, 'pages', `${page}.html`), 'utf8');
+    assert.match(html, /data-user-name/, `${page}: identitas lokal`);
   }
 });
 
-test('app.js memuat semua modul halaman yang ada', async () => {
+test('index.html langsung membuka dashboard tanpa login', async () => {
+  const html = await readFile(path.join(root, 'index.html'), 'utf8');
+  const entry = await readFile(path.join(root, 'assets/js/index.js'), 'utf8');
+
+  assert.match(html, /assets\/js\/index\.js/);
+  assert.match(entry, /pages\/dashboard\.html/);
+  assert.doesNotMatch(entry, /login\.html|auth\.service|supabase/i);
+});
+
+test('app.js memuat semua modul halaman tanpa auth', async () => {
   const app = await readFile(path.join(root, 'assets/js/app.js'), 'utf8');
+
+  assert.doesNotMatch(app, /login|auth\.service|supabase|session/i);
+  assert.match(app, /getOrCreateProfile/);
+  assert.match(app, /LOCAL_USER/);
 
   for (const page of PAGE_MODULES) {
     assert.match(
@@ -204,6 +259,64 @@ test('semua import lokal JavaScript menunjuk file yang ada', async () => {
   }
 });
 
+test('frontend tidak lagi memakai Supabase, auth, atau antrean offline', async () => {
+  const files = [
+    ...(await collectFiles('assets/js', '.js')),
+    ...(await collectFiles('pages', '.html')),
+    ...(await readdir(root))
+      .filter((file) => file.endsWith('.html'))
+      .map((file) => file)
+  ];
+
+  for (const file of files) {
+    const source = await readFile(path.join(root, file), 'utf8');
+
+    assert.doesNotMatch(source, /supabase/i, `${file}: Supabase`);
+    assert.doesNotMatch(source, /service_role\s*[:=]/i, `${file}: service role`);
+    assert.doesNotMatch(
+      source,
+      /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\./,
+      `${file}: token JWT`
+    );
+    assert.doesNotMatch(source, /enqueueOutbox|flushOutbox/i, `${file}: outbox`);
+    assert.doesNotMatch(source, /signIn|signOut|onAuthStateChange/i, `${file}: auth`);
+  }
+});
+
+test('penyimpanan lokal memakai IndexedDB dengan seluruh tabel aplikasi', async () => {
+  const database = await readFile(
+    path.join(root, 'assets/js/storage/db.js'),
+    'utf8'
+  );
+  const local = await readFile(path.join(root, 'assets/js/local.js'), 'utf8');
+
+  assert.match(database, /indexedDB\.open/);
+  assert.match(database, /'finora-local'/);
+  assert.match(database, /export async function writeBatch/);
+  assert.match(database, /export async function clearAllData/);
+  assert.match(local, /LOCAL_USER_ID\s*=\s*'local-device'/);
+  assert.match(local, /Pengguna Finora/);
+
+  for (const store of STORE_NAMES) {
+    assert.match(database, new RegExp(`'${store}'`), `store ${store}`);
+  }
+
+  for (const service of [
+    'profile.service.js',
+    'debt.service.js',
+    'receivable.service.js',
+    'savings.service.js',
+    'history.service.js',
+    'dashboard.service.js'
+  ]) {
+    const source = await readFile(
+      path.join(root, 'assets/js/services', service),
+      'utf8'
+    );
+    assert.match(source, /storage\/db\.js/, `${service}: storage lokal`);
+  }
+});
+
 test('tidak ada placeholder atau fungsi transaksi palsu di frontend', async () => {
   const files = [
     ...(await collectFiles('assets/js', '.js')),
@@ -231,64 +344,49 @@ test('tidak ada placeholder atau fungsi transaksi palsu di frontend', async () =
   }
 });
 
-test('konfigurasi frontend tidak memuat service role key', async () => {
-  const files = [
-    ...(await collectFiles('assets/js', '.js')),
-    ...(await readdir(root))
-      .filter((file) => file.endsWith('.html'))
-      .map((file) => file)
-  ];
-
-  for (const file of files) {
-    const source = await readFile(path.join(root, file), 'utf8');
-    assert.doesNotMatch(source, /service_role\s*[:=]/i, file);
-    assert.doesNotMatch(source, /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\./, file);
-  }
-});
-
-test('SQL memuat RLS, RPC atomik, dan view riwayat', async () => {
-  const schema = await readFile(path.join(root, 'database/schema.sql'), 'utf8');
-  const functions = await readFile(
-    path.join(root, 'database/functions.sql'),
-    'utf8'
-  );
-  const policies = await readFile(
-    path.join(root, 'database/policies.sql'),
-    'utf8'
-  );
-
-  for (const table of [
-    'profiles',
-    'debts',
-    'debt_payments',
-    'receivables',
-    'receivable_payments',
-    'savings',
-    'savings_transactions'
-  ]) {
-    assert.match(schema, new RegExp(`create table if not exists public\\.${table}`));
-    assert.match(
-      policies,
-      new RegExp(`alter table public\\.${table} enable row level security`)
-    );
-  }
-
-  assert.match(schema, /create or replace view public\.transaction_history/);
-  assert.match(functions, /record_debt_payment/);
-  assert.match(functions, /record_receivable_payment/);
-  assert.match(functions, /record_savings_transaction/);
-  assert.match(functions, /security definer/);
-  assert.match(functions, /for update/);
-  assert.match(policies, /auth\.uid\(\)/);
-});
-
-test('package.json menyediakan perintah pengujian', async () => {
+test('package.json menyediakan perintah pengujian lokal', async () => {
   const pkg = JSON.parse(
     await readFile(path.join(root, 'package.json'), 'utf8')
   );
 
-  assert.match(pkg.scripts.test, /test:sql/);
+  assert.equal(pkg.version, '2.0.0');
+  assert.match(pkg.scripts.test, /test:storage/);
   assert.match(pkg.scripts.test, /test:utils/);
   assert.match(pkg.scripts.test, /test:structure/);
+  assert.doesNotMatch(pkg.scripts.test, /test:sql/);
   assert.equal(pkg.scripts.dev, 'python3 -m http.server 4173');
+  assert.equal(pkg.dependencies['@supabase/supabase-js'], undefined);
+  assert.equal(pkg.devDependencies['@electric-sql/pglite'], undefined);
+  assert.equal(pkg.dependencies['@capacitor/network'], undefined);
+});
+
+test('konfigurasi Capacitor memakai aplikasi lokal tanpa plugin jaringan', async () => {
+  const config = JSON.parse(
+    await readFile(path.join(root, 'capacitor.config.json'), 'utf8')
+  );
+
+  assert.equal(config.appId, 'com.finora.app');
+  assert.equal(config.webDir, 'www');
+  assert.equal(config.plugins['@capacitor/network'], undefined);
+});
+
+test('workflow rilis tidak membutuhkan secrets Supabase', async () => {
+  const workflow = await readFile(
+    path.join(root, '.github/workflows/android-release.yml'),
+    'utf8'
+  );
+
+  assert.doesNotMatch(workflow, /SUPABASE|supabase/i);
+  assert.match(workflow, /tags:/);
+  assert.match(workflow, /assembleDebug/);
+  assert.match(workflow, /softprops\/action-gh-release/);
+});
+
+test('README menjelaskan penyimpanan lokal tanpa login', async () => {
+  const readme = await readFile(path.join(root, 'README.md'), 'utf8');
+
+  assert.match(readme, /tanpa login|tanpa akun/i);
+  assert.match(readme, /IndexedDB/);
+  assert.doesNotMatch(readme, /Supabase/i);
+  assert.doesNotMatch(readme, /service role/i);
 });

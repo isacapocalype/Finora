@@ -1,18 +1,15 @@
 // FINORA — BUILD WWW
-// Menyalin seluruh file aplikasi (HTML, assets) ke folder www/ untuk Capacitor.
-// Lalu menulis ulang assets/js/config.js dari environment variable (rahasia build).
+// Menyalin seluruh file aplikasi (HTML, CSS, JS) ke folder www/ untuk Capacitor.
 
 import {
   copyFileSync,
   cpSync,
   mkdirSync,
   readdirSync,
-  rmSync,
-  writeFileSync
+  rmSync
 } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { renderConfig } from './generate-config.mjs';
 
 const scriptsDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(scriptsDir, '..');
@@ -33,13 +30,7 @@ const www = path.join(root, 'www');
 rmDir(www);
 mkdirSync(path.join(www, 'assets'), { recursive: true });
 
-const rootPages = [
-  'index.html',
-  'login.html',
-  'register.html',
-  'forgot-password.html',
-  'reset-password.html'
-];
+const rootPages = ['index.html'];
 
 for (const file of rootPages) {
   copyFile(path.join(root, file), path.join(www, file));
@@ -62,5 +53,3 @@ mkdirSync(assetsTarget, { recursive: true });
 for (const dir of ['css', 'images', 'js', 'vendor', 'fonts']) {
   copyDir(path.join(assetsSource, dir), path.join(assetsTarget, dir));
 }
-
-writeFileSync(path.join(assetsTarget, 'js', 'config.js'), renderConfig());

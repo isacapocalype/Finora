@@ -1,12 +1,9 @@
-import { requireSupabase } from '../supabase.js';
-import { HISTORY_GROUPS } from '../utils.js';
-import { isOnline } from '../offline/network.js';
-import { isNetworkError } from '../offline/errors.js';
-import { readCachedUserRows, writeAll } from '../offline/db.js';
+// FINORA — HISTORY SERVICE (local)
+// Riwayat dibentuk dari data utang, piutang, dan tabungan di perangkat.
 
-const VIEW = 'transaction_history';
-const HISTORY_FIELDS =
-  'id, user_id, category, title, description, amount, direction, transaction_date, created_at';
+import { HISTORY_GROUPS } from '../utils.js';
+import { readUserRows } from '../storage/db.js';
+import { resolveUserId } from '../local.js';
 
 const SORT_OPTIONS = {
   newest: { column: 'transaction_date', ascending: false },
@@ -15,11 +12,197 @@ const SORT_OPTIONS = {
   amount_asc: { column: 'amount', ascending: true }
 };
 
-function sanitizeSearchTerm(term) {
-  return String(term || '')
-    .trim()
-    .replace(/[(),"\\]/g, ' ')
-    .replace(/\s+/g, ' ');
+function historyRow({
+  id,
+  userId,
+  category,
+  title,
+  description,
+  amount,
+  direction,
+  transactionDate,
+  createdAt
+}) {
+  return {
+    id,
+    user_id: userId,
+    category,
+    title,
+    description: description || '',
+    amount: Number(amount) || 0,
+    direction,
+    transaction_date: transactionDate,
+    created_at: createdAt || ''
+  };
+}
+
+export function buildHistoryRows({
+  debts = [],
+  debtPayments = [],
+  receivables = [],
+  receivablePayments = [],
+  savings = [],
+  savingsTransactions = []
+} = {}) {
+  const debtMap = new Map(debts.map((debt) => [debt.id, debt]));
+  const receivableMap = new Map(
+    receivables.map((receivable) => [receivable.id, receivable])
+  );
+  const savingsMap = new Map(savings.map((item) => [item.id, item]));
+  const rows = [];
+
+  for (const debt of debts) {
+    rows.push(
+      historyRow({
+        id: debt.id,
+        userId: debt.user_id,
+        category: 'debt_created',
+        title: `Utang kepada ${debt.lender_name}`,
+        description: debt.description,
+        amount: debt.amount,
+        direction: '+',
+        transactionDate: debt.transaction_date,
+        createdAt: debt.created_at
+      })
+    );
+  }
+
+  for (const payment of debtPayments) {
+    const debt = debtMap.get(payment.debt_id);
+
+    if (!debt) {
+      continue;
+    }
+
+    rows.push(
+      historyRow({
+        id: payment.id,
+        userId: payment.user_id,
+        category: 'debt_payment',
+        title: `Pembayaran utang kepada ${debt.lender_name}`,
+        description: payment.description,
+        amount: payment.amount,
+        direction: '-',
+        transactionDate: payment.payment_date,
+        createdAt: payment.created_at
+      })
+    );
+  }
+
+  for (const receivable of receivables) {
+    rows.push(
+      historyRow({
+        id: receivable.id,
+        userId: receivable.user_id,
+        category: 'receivable_created',
+        title: `Piutang kepada ${receivable.borrower_name}`,
+        description: receivable.description,
+        amount: receivable.amount,
+        direction: '-',
+        transactionDate: receivable.transaction_date,
+        createdAt: receivable.created_at
+      })
+    );
+  }
+
+  for (const payment of receivablePayments) {
+    const receivable = receivableMap.get(payment.receivable_id);
+
+    if (!receivable) {
+      continue;
+    }
+
+    rows.push(
+      historyRow({
+        id: payment.id,
+        userId: payment.user_id,
+        category: 'receivable_payment',
+        title: `Pengembalian piutang dari ${receivable.borrower_name}`,
+        description: payment.description,
+        amount: payment.amount,
+        direction: '+',
+        transactionDate: payment.payment_date,
+        createdAt: payment.created_at
+      })
+    );
+  }
+
+  for (const transaction of savingsTransactions) {
+    const item = savingsMap.get(transaction.savings_id);
+
+    if (!item) {
+      continue;
+    }
+
+    const isDeposit = transaction.type === 'deposit';
+
+    rows.push(
+      historyRow({
+        id: transaction.id,
+        userId: transaction.user_id,
+        category: isDeposit ? 'savings_deposit' : 'savings_withdrawal',
+        title: isDeposit
+          ? `Setoran tabungan ${item.name}`
+          : `Penarikan tabungan ${item.name}`,
+        description: transaction.description,
+        amount: transaction.amount,
+        direction: isDeposit ? '-' : '+',
+        transactionDate: transaction.transaction_date,
+        createdAt: transaction.created_at
+      })
+    );
+  }
+
+  return rows;
+}
+
+async function loadHistorySource(userId) {
+  const ownerId = resolveUserId(userId);
+  const [
+    debts,
+    debtPayments,
+    receivables,
+    receivablePayments,
+    savings,
+    savingsTransactions
+  ] = await Promise.all([
+    readUserRows(ownerId, 'debts'),
+    readUserRows(ownerId, 'debt_payments'),
+    readUserRows(ownerId, 'receivables'),
+    readUserRows(ownerId, 'receivable_payments'),
+    readUserRows(ownerId, 'savings'),
+    readUserRows(ownerId, 'savings_transactions')
+  ]);
+
+  return {
+    debts,
+    debtPayments,
+    receivables,
+    receivablePayments,
+    savings,
+    savingsTransactions
+  };
+}
+
+function sortHistory(rows, sortOption) {
+  const direction = sortOption.ascending ? 1 : -1;
+
+  return [...rows].sort((first, second) => {
+    const comparison =
+      sortOption.column === 'amount'
+        ? Number(first.amount) - Number(second.amount)
+        : String(first.transaction_date || '').localeCompare(
+            String(second.transaction_date || '')
+          );
+
+    if (comparison !== 0) {
+      return comparison * direction;
+    }
+
+    return String(second.created_at || '').localeCompare(
+      String(first.created_at || '')
+    );
+  });
 }
 
 export async function listHistory({
@@ -32,117 +215,44 @@ export async function listHistory({
   page = 1,
   pageSize = 10
 }) {
-  const supabase = requireSupabase();
+  const source = await loadHistorySource(userId);
   const safePage = Math.max(1, Number(page) || 1);
   const safePageSize = Math.max(1, Math.min(50, Number(pageSize) || 10));
-  const from = (safePage - 1) * safePageSize;
-  const to = from + safePageSize - 1;
-
-  let query = supabase
-    .from(VIEW)
-    .select(HISTORY_FIELDS, { count: 'exact' })
-    .eq('user_id', userId);
-
-  if (group !== 'all' && HISTORY_GROUPS[group]) {
-    query = query.in('category', HISTORY_GROUPS[group]);
-  }
-
-  if (dateFrom) {
-    query = query.gte('transaction_date', dateFrom);
-  }
-
-  if (dateTo) {
-    query = query.lte('transaction_date', dateTo);
-  }
-
-  const searchTerm = sanitizeSearchTerm(search);
-
-  if (searchTerm) {
-    query = query.or(
-      `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`
-    );
-  }
-
-  const sortOption = SORT_OPTIONS[sort] || SORT_OPTIONS.newest;
-  query = query
-    .order(sortOption.column, { ascending: sortOption.ascending })
-    .order('created_at', { ascending: false })
-    .range(from, to);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    if (!isOnline() || isNetworkError(error)) {
-      const cached = (await readCachedUserRows(userId, VIEW)).map((row) => ({
-        ...row,
-        amount: Number(row.amount) || 0
-      }));
-      const normalizedSearch = searchTerm.toLowerCase();
-      const filtered = cached.filter((row) => {
-        if (group !== 'all' && HISTORY_GROUPS[group]) {
-          if (!HISTORY_GROUPS[group].includes(row.category)) {
-            return false;
-          }
-        }
-
-        const transactionDate = String(row.transaction_date || '');
-
-        if (dateFrom && transactionDate < dateFrom) {
-          return false;
-        }
-
-        if (dateTo && transactionDate > dateTo) {
-          return false;
-        }
-
-        if (normalizedSearch) {
-          const haystack = `${row.title || ''} ${row.description || ''}`.toLowerCase();
-          return haystack.includes(normalizedSearch);
-        }
-
-        return true;
-      });
-      const sorted = [...filtered].sort((first, second) => {
-        const direction = sortOption.ascending ? 1 : -1;
-        const comparison =
-          sortOption.column === 'amount'
-            ? Number(first.amount) - Number(second.amount)
-            : String(first.transaction_date || '').localeCompare(
-                String(second.transaction_date || '')
-              );
-
-        if (comparison !== 0) {
-          return comparison * direction;
-        }
-
-        return String(second.created_at || '').localeCompare(
-          String(first.created_at || '')
-        );
-      });
-      const totalCount = sorted.length;
-      const totalPages = Math.max(1, Math.ceil(totalCount / safePageSize));
-      const start = (safePage - 1) * safePageSize;
-      const end = start + safePageSize;
-
-      return {
-        rows: sorted.slice(start, end),
-        count: totalCount,
-        page: safePage,
-        pageSize: safePageSize,
-        totalPages
-      };
+  const normalizedSearch = String(search || '').trim().toLowerCase();
+  const rows = buildHistoryRows(source).filter((row) => {
+    if (group !== 'all' && HISTORY_GROUPS[group]) {
+      if (!HISTORY_GROUPS[group].includes(row.category)) {
+        return false;
+      }
     }
-    throw error;
-  }
 
-  const rows = data || [];
-  await writeAll(VIEW, rows);
+    const transactionDate = String(row.transaction_date || '');
 
-  const totalCount = count ?? rows.length;
+    if (dateFrom && transactionDate < dateFrom) {
+      return false;
+    }
+
+    if (dateTo && transactionDate > dateTo) {
+      return false;
+    }
+
+    if (normalizedSearch) {
+      const haystack = `${row.title || ''} ${row.description || ''}`.toLowerCase();
+      return haystack.includes(normalizedSearch);
+    }
+
+    return true;
+  });
+  const sorted = sortHistory(
+    rows,
+    SORT_OPTIONS[sort] || SORT_OPTIONS.newest
+  );
+  const totalCount = sorted.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / safePageSize));
+  const start = (safePage - 1) * safePageSize;
 
   return {
-    rows,
+    rows: sorted.slice(start, start + safePageSize),
     count: totalCount,
     page: safePage,
     pageSize: safePageSize,
@@ -151,28 +261,8 @@ export async function listHistory({
 }
 
 export async function listRecentHistory(userId, limit = 6) {
-  const supabase = requireSupabase();
-  const { data, error } = await supabase
-    .from(VIEW)
-    .select(HISTORY_FIELDS)
-    .eq('user_id', userId)
-    .order('transaction_date', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  const source = await loadHistorySource(userId);
+  const sorted = sortHistory(buildHistoryRows(source), SORT_OPTIONS.newest);
 
-  if (error) {
-    if (!isOnline() || isNetworkError(error)) {
-      const cached = [...(await readCachedUserRows(userId, VIEW))].sort((first, second) =>
-        String(second.transaction_date || '').localeCompare(String(first.transaction_date || '')) ||
-        String(second.created_at || '').localeCompare(String(first.created_at || ''))
-      );
-      return cached.slice(0, limit);
-    }
-    throw error;
-  }
-
-  const rows = data || [];
-  await writeAll(VIEW, rows);
-
-  return rows;
+  return sorted.slice(0, Math.max(1, Number(limit) || 6));
 }
