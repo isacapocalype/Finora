@@ -11,6 +11,7 @@ const receivableService = await import(
   '../assets/js/services/receivable.service.js'
 );
 const savingsService = await import('../assets/js/services/savings.service.js');
+const walletService = await import('../assets/js/services/wallet.service.js');
 const contactService = await import('../assets/js/services/contact.service.js');
 const historyService = await import('../assets/js/services/history.service.js');
 const dashboardService = await import(
@@ -598,6 +599,222 @@ test('tabungan: setor, tarik, validasi saldo, dan hapus transaksi', async () => 
     ).count,
     0
   );
+});
+
+test('dompet: buat, pemasukan, pengeluaran, edit, dan validasi saldo', async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const created = await walletService.createWallet(LOCAL_USER_ID, {
+    name: 'Dompet Harian',
+    type: 'cash',
+    color: 'violet',
+    initialBalance: 100000,
+    targetAmount: 500000,
+    description: 'Belanja sehari-hari'
+  });
+
+  assert.equal(created.balance, 100000);
+  assert.equal(created.initial_balance, 100000);
+  assert.equal(created.target_amount, 500000);
+
+  await walletService.recordWalletTransaction({
+    userId: LOCAL_USER_ID,
+    walletId: created.id,
+    type: 'income',
+    amount: 50000,
+    category: 'salary',
+    transactionDate: today
+  });
+  await walletService.recordWalletTransaction({
+    userId: LOCAL_USER_ID,
+    walletId: created.id,
+    type: 'expense',
+    amount: 20000,
+    category: 'food',
+    transactionDate: today
+  });
+
+  let wallet = (await walletService.listWallets(LOCAL_USER_ID))[0];
+  assert.equal(wallet.balance, 130000);
+
+  await assert.rejects(
+    walletService.recordWalletTransaction({
+      userId: LOCAL_USER_ID,
+      walletId: created.id,
+      type: 'expense',
+      amount: 999999,
+      category: 'food',
+      transactionDate: today
+    }),
+    /Saldo dompet tidak mencukupi/
+  );
+
+  const updated = await walletService.updateWallet(
+    LOCAL_USER_ID,
+    created.id,
+    {
+      name: 'Dompet Utama',
+      type: 'bank',
+      color: 'blue',
+      initialBalance: 150000,
+      targetAmount: 600000,
+      description: 'Rekening utama'
+    }
+  );
+
+  assert.equal(updated.name, 'Dompet Utama');
+  assert.equal(updated.type, 'bank');
+  assert.equal(updated.color, 'blue');
+  assert.equal(updated.initial_balance, 150000);
+  assert.equal(updated.balance, 180000);
+
+  const history = await historyService.listHistory({
+    userId: LOCAL_USER_ID,
+    group: 'wallets'
+  });
+  assert.deepEqual(
+    history.rows.map((row) => row.category).sort(),
+    ['wallet_expense', 'wallet_income']
+  );
+
+  const dashboard = await dashboardService.loadDashboardData(LOCAL_USER_ID);
+  assert.equal(dashboard.summary.totalWalletBalance, 180000);
+  assert.equal(dashboard.summary.walletCount, 1);
+  assert.equal(dashboard.wallets.length, 1);
+});
+
+test('dompet: transfer antar dompet atomik dan tampil sekali di riwayat', async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const source = await walletService.createWallet(LOCAL_USER_ID, {
+    name: 'Tunai',
+    type: 'cash',
+    color: 'emerald',
+    initialBalance: 100000
+  });
+  const destination = await walletService.createWallet(LOCAL_USER_ID, {
+    name: 'Bank',
+    type: 'bank',
+    color: 'blue',
+    initialBalance: 0
+  });
+
+  await walletService.recordWalletTransfer({
+    userId: LOCAL_USER_ID,
+    fromWalletId: source.id,
+    toWalletId: destination.id,
+    amount: 40000,
+    transactionDate: today,
+    description: 'Pindah dana'
+  });
+
+  const wallets = await walletService.listWallets(LOCAL_USER_ID);
+  const sourceWallet = wallets.find((wallet) => wallet.id === source.id);
+  const destinationWallet = wallets.find(
+    (wallet) => wallet.id === destination.id
+  );
+
+  assert.equal(sourceWallet.balance, 60000);
+  assert.equal(destinationWallet.balance, 40000);
+  assert.equal(
+    (await walletService.listWalletTransactions(LOCAL_USER_ID, source.id))
+      .length,
+    1
+  );
+  assert.equal(
+    (await walletService.listWalletTransactions(LOCAL_USER_ID, destination.id))
+      .length,
+    1
+  );
+
+  const history = await historyService.listHistory({
+    userId: LOCAL_USER_ID,
+    group: 'wallets'
+  });
+  assert.equal(history.count, 1);
+  assert.equal(history.rows[0].category, 'wallet_transfer');
+  assert.equal(history.rows[0].title, 'Transfer dari Tunai ke Bank');
+
+  await assert.rejects(
+    walletService.recordWalletTransfer({
+      userId: LOCAL_USER_ID,
+      fromWalletId: source.id,
+      toWalletId: source.id,
+      amount: 10000,
+      transactionDate: today
+    }),
+    /harus berbeda/
+  );
+
+  await assert.rejects(
+    walletService.recordWalletTransfer({
+      userId: LOCAL_USER_ID,
+      fromWalletId: source.id,
+      toWalletId: destination.id,
+      amount: 999999,
+      transactionDate: today
+    }),
+    /Saldo dompet asal tidak mencukupi/
+  );
+
+  const dashboard = await dashboardService.loadDashboardData(LOCAL_USER_ID);
+  assert.equal(dashboard.summary.totalWalletBalance, 100000);
+  assert.equal(
+    dashboard.recent.filter((row) => row.category === 'wallet_transfer').length,
+    1
+  );
+});
+
+test('dompet: hapus membatalkan transfer dan menolak saldo negatif', async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const source = await walletService.createWallet(LOCAL_USER_ID, {
+    name: 'Sumber',
+    type: 'cash',
+    color: 'amber',
+    initialBalance: 100000
+  });
+  const destination = await walletService.createWallet(LOCAL_USER_ID, {
+    name: 'Tujuan',
+    type: 'ewallet',
+    color: 'rose',
+    initialBalance: 0
+  });
+
+  await walletService.recordWalletTransfer({
+    userId: LOCAL_USER_ID,
+    fromWalletId: source.id,
+    toWalletId: destination.id,
+    amount: 40000,
+    transactionDate: today
+  });
+  await walletService.recordWalletTransaction({
+    userId: LOCAL_USER_ID,
+    walletId: destination.id,
+    type: 'expense',
+    amount: 10000,
+    category: 'shopping',
+    transactionDate: today
+  });
+
+  await assert.rejects(
+    walletService.deleteWallet(LOCAL_USER_ID, source.id),
+    /bernilai negatif/
+  );
+
+  await walletService.deleteWallet(LOCAL_USER_ID, destination.id);
+
+  const wallets = await walletService.listWallets(LOCAL_USER_ID);
+  assert.equal(wallets.length, 1);
+  assert.equal(wallets[0].id, source.id);
+  assert.equal(wallets[0].balance, 100000);
+  assert.deepEqual(
+    await walletService.listAllWalletTransactions(LOCAL_USER_ID),
+    []
+  );
+
+  const history = await historyService.listHistory({
+    userId: LOCAL_USER_ID,
+    group: 'wallets'
+  });
+  assert.equal(history.count, 0);
 });
 
 test('riwayat mendukung filter grup, pencarian, urutan, dan pagination', async () => {

@@ -9,6 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REQUIRED_FILES = [
   'index.html',
   'pages/dashboard.html',
+  'pages/wallets.html',
   'pages/debts.html',
   'pages/receivables.html',
   'pages/savings.html',
@@ -28,6 +29,7 @@ const REQUIRED_FILES = [
   'assets/js/app.js',
   'assets/js/index.js',
   'assets/js/dashboard.js',
+  'assets/js/wallets.js',
   'assets/js/debts.js',
   'assets/js/receivables.js',
   'assets/js/savings.js',
@@ -35,6 +37,7 @@ const REQUIRED_FILES = [
   'assets/js/settings.js',
   'assets/js/components/ledger.js',
   'assets/js/components/modal.js',
+  'assets/js/components/motion.js',
   'assets/js/components/toast.js',
   'assets/js/components/states.js',
   'assets/js/components/layout.js',
@@ -46,6 +49,7 @@ const REQUIRED_FILES = [
   'assets/js/services/debt.service.js',
   'assets/js/services/receivable.service.js',
   'assets/js/services/savings.service.js',
+  'assets/js/services/wallet.service.js',
   'assets/js/services/history.service.js',
   'scripts/build-www.mjs',
   'tests/storage.test.mjs',
@@ -78,6 +82,7 @@ const REMOVED_PATHS = [
 
 const PAGE_MODULES = [
   'dashboard',
+  'wallets',
   'debts',
   'receivables',
   'savings',
@@ -95,7 +100,9 @@ const STORE_NAMES = [
   'receivable_additions',
   'receivable_payments',
   'savings',
-  'savings_transactions'
+  'savings_transactions',
+  'wallets',
+  'wallet_transactions'
 ];
 
 async function fileExists(relativePath) {
@@ -297,6 +304,7 @@ test('penyimpanan lokal memakai IndexedDB dengan seluruh tabel aplikasi', async 
 
   assert.match(database, /indexedDB\.open/);
   assert.match(database, /'finora-local'/);
+  assert.match(database, /DB_VERSION\s*=\s*3/);
   assert.match(database, /export async function writeBatch/);
   assert.match(database, /export async function clearAllData/);
   assert.match(local, /LOCAL_USER_ID\s*=\s*'local-device'/);
@@ -312,6 +320,7 @@ test('penyimpanan lokal memakai IndexedDB dengan seluruh tabel aplikasi', async 
     'debt.service.js',
     'receivable.service.js',
     'savings.service.js',
+    'wallet.service.js',
     'history.service.js',
     'dashboard.service.js'
   ]) {
@@ -347,6 +356,58 @@ test('halaman utang dan piutang memakai profil kontak dan penambahan pokok', asy
   }
 });
 
+test('halaman dompet, navigasi, dan sistem motion terhubung', async () => {
+  const layout = await readFile(
+    path.join(root, 'assets/js/components/layout.js'),
+    'utf8'
+  );
+  const app = await readFile(path.join(root, 'assets/js/app.js'), 'utf8');
+  const history = await readFile(
+    path.join(root, 'pages/history.html'),
+    'utf8'
+  );
+  const walletService = await readFile(
+    path.join(root, 'assets/js/services/wallet.service.js'),
+    'utf8'
+  );
+  const variables = await readFile(
+    path.join(root, 'assets/css/variables.css'),
+    'utf8'
+  );
+  const layoutCss = await readFile(
+    path.join(root, 'assets/css/layout.css'),
+    'utf8'
+  );
+  const components = await readFile(
+    path.join(root, 'assets/css/components.css'),
+    'utf8'
+  );
+  const modal = await readFile(
+    path.join(root, 'assets/js/components/modal.js'),
+    'utf8'
+  );
+  const gradle = await readFile(
+    path.join(root, 'android/app/build.gradle'),
+    'utf8'
+  );
+
+  assert.match(layout, /wallets\.html/);
+  assert.match(layout, /label: 'Dompet'/);
+  assert.match(layout, /MORE_PAGES/);
+  assert.match(app, /wallets:\s*\(\)\s*=>\s*import\('\.\/wallets\.js'\)/);
+  assert.match(history, /data-history-group="wallets"/);
+  assert.match(walletService, /recordWalletTransfer/);
+  assert.match(walletService, /deleteWallet/);
+  assert.match(walletService, /wallet_transactions/);
+  assert.match(variables, /--motion-ease-emphasized/);
+  assert.match(layoutCss, /@view-transition/);
+  assert.match(layoutCss, /content-reveal/);
+  assert.match(components, /prefers-reduced-motion:\s*reduce/);
+  assert.match(modal, /is-closing/);
+  assert.match(gradle, /versionCode 4/);
+  assert.match(gradle, /versionName "2\.2"/);
+});
+
 test('tidak ada placeholder atau fungsi transaksi palsu di frontend', async () => {
   const files = [
     ...(await collectFiles('assets/js', '.js')),
@@ -379,7 +440,7 @@ test('package.json menyediakan perintah pengujian lokal', async () => {
     await readFile(path.join(root, 'package.json'), 'utf8')
   );
 
-  assert.equal(pkg.version, '2.1.0');
+  assert.equal(pkg.version, '2.2.0');
   assert.match(pkg.scripts.test, /test:storage/);
   assert.match(pkg.scripts.test, /test:utils/);
   assert.match(pkg.scripts.test, /test:structure/);

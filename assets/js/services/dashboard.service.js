@@ -5,6 +5,7 @@ import { readUserRows } from '../storage/db.js';
 import { resolveUserId } from '../local.js';
 import { calcRemaining, parseDate, roundMoney } from '../utils.js';
 import { buildHistoryRows } from './history.service.js';
+import { computeWalletSummary } from './wallet.service.js';
 
 function transactionNet(transaction) {
   const amount = Number(transaction.amount) || 0;
@@ -109,6 +110,8 @@ export function computeDashboardData({
   receivables = [],
   savings = [],
   transactions = [],
+  wallets = [],
+  walletTransactions = [],
   recent = []
 } = {}) {
   const totalDebt = debts.reduce(
@@ -129,6 +132,7 @@ export function computeDashboardData({
     (total, item) => total + Number(item.target_amount),
     0
   );
+  const walletSummary = computeWalletSummary(wallets, walletTransactions);
 
   const activeSavings = savings
     .filter((item) => Number(item.current_amount) < Number(item.target_amount))
@@ -146,6 +150,10 @@ export function computeDashboardData({
       totalReceivable: roundMoney(totalReceivable),
       totalSavings: roundMoney(totalSavings),
       totalTarget: roundMoney(totalTarget),
+      totalWalletBalance: walletSummary.totalBalance,
+      walletCount: walletSummary.count,
+      walletIncomeThisMonth: walletSummary.incomeThisMonth,
+      walletExpenseThisMonth: walletSummary.expenseThisMonth,
       activeDebtCount: debts.filter((debt) => debt.status !== 'paid').length,
       activeReceivableCount: receivables.filter(
         (receivable) => receivable.status !== 'paid'
@@ -160,6 +168,9 @@ export function computeDashboardData({
       debt: roundMoney(totalDebt),
       receivable: roundMoney(totalReceivable)
     },
+    wallets: [...wallets]
+      .sort((first, second) => Number(second.balance) - Number(first.balance))
+      .slice(0, 4),
     activeSavings,
     recent
   };
@@ -175,7 +186,9 @@ export async function loadDashboardData(userId) {
     receivableAdditions,
     receivablePayments,
     savings,
-    transactions
+    transactions,
+    wallets,
+    walletTransactions
   ] = await Promise.all([
     readUserRows(ownerId, 'debts'),
     readUserRows(ownerId, 'debt_additions'),
@@ -184,7 +197,9 @@ export async function loadDashboardData(userId) {
     readUserRows(ownerId, 'receivable_additions'),
     readUserRows(ownerId, 'receivable_payments'),
     readUserRows(ownerId, 'savings'),
-    readUserRows(ownerId, 'savings_transactions')
+    readUserRows(ownerId, 'savings_transactions'),
+    readUserRows(ownerId, 'wallets'),
+    readUserRows(ownerId, 'wallet_transactions')
   ]);
   const recent = buildHistoryRows({
     debts,
@@ -194,7 +209,9 @@ export async function loadDashboardData(userId) {
     receivableAdditions,
     receivablePayments,
     savings,
-    savingsTransactions: transactions
+    savingsTransactions: transactions,
+    wallets,
+    walletTransactions
   })
     .sort(
       (first, second) =>
@@ -212,6 +229,8 @@ export async function loadDashboardData(userId) {
     receivables,
     savings,
     transactions,
+    wallets,
+    walletTransactions,
     recent
   });
 }

@@ -161,10 +161,20 @@
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  transition: border-color var(--transition), box-shadow var(--transition),
+    transform var(--transition);
 }
 
 .card {
   padding: 22px;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(221, 213, 238, 0.9);
+    box-shadow: var(--shadow-card-hover);
+  }
 }
 
 .card-header {
@@ -330,7 +340,12 @@
 }
 
 .btn:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.97);
+}
+
+.btn:focus-visible {
+  outline: 0;
+  box-shadow: var(--shadow-focus);
 }
 
 .btn:disabled {
@@ -1019,7 +1034,7 @@ body.modal-open {
 }
 
 .modal[open] {
-  animation: modal-fade 220ms ease;
+  animation: modal-fade var(--motion-duration) var(--motion-ease-standard);
 }
 
 .modal-surface {
@@ -1030,7 +1045,17 @@ body.modal-open {
   background: #fff;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-float);
-  animation: modal-scale 220ms ease;
+  animation: modal-scale var(--motion-duration) var(--motion-ease-emphasized);
+}
+
+.modal.is-closing {
+  animation: modal-fade-out var(--motion-duration-fast) var(--motion-ease-exit)
+    both;
+}
+
+.modal.is-closing .modal-surface {
+  animation: modal-scale-out var(--motion-duration-fast) var(--motion-ease-exit)
+    both;
 }
 
 .modal-sm .modal-surface {
@@ -1119,7 +1144,7 @@ body.modal-open {
   border-radius: var(--radius-md);
   box-shadow: 0 14px 40px rgba(46, 25, 86, 0.16);
   pointer-events: auto;
-  animation: toast-in 220ms ease;
+  animation: toast-in var(--motion-duration) var(--motion-ease-emphasized);
 }
 
 .toast-error {
@@ -1188,8 +1213,9 @@ body.modal-open {
 
 .toast.is-leaving {
   opacity: 0;
-  transform: translateX(12px);
-  transition: opacity 200ms ease, transform 200ms ease;
+  transform: translateX(12px) scale(0.98);
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-exit),
+    transform var(--motion-duration-fast) var(--motion-ease-exit);
 }
 
 /* =========================================================
@@ -1382,7 +1408,7 @@ body.modal-open {
   height: 100%;
   background: linear-gradient(90deg, #8b5cf6, #6d28d9);
   border-radius: inherit;
-  transition: width 600ms ease;
+  transition: width var(--motion-duration-slow) var(--motion-ease-emphasized);
 }
 
 .progress-meta {
@@ -1883,13 +1909,68 @@ body.modal-open {
   }
 }
 
+@keyframes modal-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateX(14px);
+    transform: translateX(14px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Hormati preferensi pengguna untuk mengurangi gerakan. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  .page-content > * {
+    animation: none !important;
+  }
+
+  .card:hover,
+  .wallet-card:hover,
+  .dashboard-wallet-card:hover,
+  .quick-action:hover,
+  .btn:active,
+  .bottom-nav-link:active,
+  .bottom-nav-link.is-active svg,
+  .sheet-link:active {
+    transform: none !important;
   }
 }

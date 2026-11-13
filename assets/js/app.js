@@ -1,12 +1,14 @@
 import { LOCAL_USER } from './local.js';
 import { getOrCreateProfile } from './services/profile.service.js';
 import { renderLayout } from './components/layout.js';
+import { initPageTransitions } from './components/motion.js';
 import { icon, refreshIcons } from './icons.js';
 import { escapeHtml, getErrorMessage } from './utils.js';
 import { initNativeShell } from './native.js';
 
 const PAGE_LOADERS = {
   dashboard: () => import('./dashboard.js'),
+  wallets: () => import('./wallets.js'),
   debts: () => import('./debts.js'),
   receivables: () => import('./receivables.js'),
   savings: () => import('./savings.js'),
@@ -39,6 +41,8 @@ async function bootstrap() {
     });
     return;
   }
+
+  initPageTransitions();
 
   let profile;
 

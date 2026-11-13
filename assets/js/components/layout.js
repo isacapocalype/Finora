@@ -3,6 +3,7 @@ import { icon, refreshIcons } from '../icons.js';
 
 const NAV_ITEMS = [
   { page: 'dashboard', href: 'dashboard.html', label: 'Dashboard', icon: 'layout-dashboard' },
+  { page: 'wallets', href: 'wallets.html', label: 'Dompet', icon: 'wallet' },
   { page: 'debts', href: 'debts.html', label: 'Utang', icon: 'arrow-down-left' },
   { page: 'receivables', href: 'receivables.html', label: 'Piutang', icon: 'arrow-up-right' },
   { page: 'savings', href: 'savings.html', label: 'Tabungan', icon: 'piggy-bank' },
@@ -12,10 +13,12 @@ const NAV_ITEMS = [
 
 const BOTTOM_ITEMS = [
   { page: 'dashboard', href: 'dashboard.html', label: 'Home', icon: 'layout-dashboard' },
+  { page: 'wallets', href: 'wallets.html', label: 'Dompet', icon: 'wallet' },
   { page: 'debts', href: 'debts.html', label: 'Utang', icon: 'arrow-down-left' },
-  { page: 'receivables', href: 'receivables.html', label: 'Piutang', icon: 'arrow-up-right' },
-  { page: 'savings', href: 'savings.html', label: 'Tabungan', icon: 'piggy-bank' }
+  { page: 'receivables', href: 'receivables.html', label: 'Piutang', icon: 'arrow-up-right' }
 ];
+
+const MORE_PAGES = ['savings', 'history', 'settings'];
 
 let sheetListenersBound = false;
 
@@ -70,7 +73,7 @@ export function renderLayout({ profile, activePage }) {
         `
       ).join('')}
       <button type="button"
-              class="bottom-nav-link ${['history', 'settings'].includes(activePage) ? 'is-active' : ''}"
+              class="bottom-nav-link ${MORE_PAGES.includes(activePage) ? 'is-active' : ''}"
               data-more-menu
               aria-expanded="false"
               aria-controls="mobile-sheet">
@@ -81,7 +84,7 @@ export function renderLayout({ profile, activePage }) {
   }
 
   renderIdentity({ profile });
-  ensureMobileSheet();
+  ensureMobileSheet(activePage);
   refreshIcons();
 }
 
@@ -100,8 +103,20 @@ export function renderIdentity({ profile }) {
   });
 }
 
-function ensureMobileSheet() {
-  if (document.getElementById('mobile-sheet')) {
+function ensureMobileSheet(activePage = '') {
+  const existing = document.getElementById('mobile-sheet');
+
+  if (existing) {
+    existing.querySelectorAll('[data-sheet-page]').forEach((link) => {
+      const isActive = link.dataset.sheetPage === activePage;
+      link.classList.toggle('is-active', isActive);
+
+      if (isActive) {
+        link.setAttribute('aria-current', 'page');
+      } else {
+        link.removeAttribute('aria-current');
+      }
+    });
     bindSheetListeners();
     return;
   }
@@ -114,8 +129,9 @@ function ensureMobileSheet() {
     <button type="button" class="mobile-sheet-backdrop" data-sheet-close aria-label="Tutup menu"></button>
     <div class="mobile-sheet-panel" role="dialog" aria-modal="true" aria-label="Menu lainnya">
       <span class="sheet-handle" aria-hidden="true"></span>
-      <a class="sheet-link" href="history.html">${icon('history')}<span>Riwayat Transaksi</span></a>
-      <a class="sheet-link" href="settings.html">${icon('settings')}<span>Pengaturan</span></a>
+      <a class="sheet-link ${activePage === 'savings' ? 'is-active' : ''}" data-sheet-page="savings" href="savings.html">${icon('piggy-bank')}<span>Tabungan</span></a>
+      <a class="sheet-link ${activePage === 'history' ? 'is-active' : ''}" data-sheet-page="history" href="history.html">${icon('history')}<span>Riwayat Transaksi</span></a>
+      <a class="sheet-link ${activePage === 'settings' ? 'is-active' : ''}" data-sheet-page="settings" href="settings.html">${icon('settings')}<span>Pengaturan</span></a>
     </div>
   `;
 

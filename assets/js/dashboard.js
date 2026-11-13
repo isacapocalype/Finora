@@ -8,6 +8,8 @@ import {
   formatLongDate,
   getCategoryMeta,
   getErrorMessage,
+  getWalletColorMeta,
+  getWalletTypeMeta,
   greetingForHour
 } from './utils.js';
 import { icon, refreshIcons } from './icons.js';
@@ -27,6 +29,7 @@ const elements = {
   chartCanvas: document.getElementById('savings-chart'),
   chartRangeButtons: document.querySelectorAll('[data-chart-range]'),
   comparison: document.getElementById('comparison-body'),
+  wallets: document.getElementById('dashboard-wallets'),
   activeSavings: document.getElementById('active-savings'),
   recent: document.getElementById('dashboard-recent')
 };
@@ -83,6 +86,16 @@ function renderLoadingState() {
     <span class="skeleton skeleton-text" style="--skeleton-width: 70%; --skeleton-margin-top: 10px"></span>
     <span class="skeleton skeleton-block"></span>
   `;
+  elements.wallets.innerHTML = Array.from(
+    { length: 4 },
+    () => `
+      <div class="dashboard-wallet-skeleton">
+        <span class="skeleton skeleton-circle" style="--skeleton-size: 38px; --skeleton-radius: 12px"></span>
+        <span class="skeleton skeleton-text" style="--skeleton-width: 70%"></span>
+        <span class="skeleton skeleton-text" style="--skeleton-width: 45%"></span>
+      </div>
+    `
+  ).join('');
   elements.recent.innerHTML = tableSkeleton(4, 4);
 
   const wrapper =
@@ -104,6 +117,7 @@ async function loadData() {
     ensureChartCanvas();
     renderSummary(dashboardData);
     renderCharts(dashboardData);
+    renderWallets(dashboardData.wallets);
     renderActiveSavings(dashboardData.activeSavings);
     renderRecent(dashboardData.recent);
   } catch (error) {
@@ -131,7 +145,25 @@ function ensureChartCanvas() {
 
 function renderSummary(data) {
   const { summary } = data;
+  const savingsProgress =
+    summary.totalTarget > 0
+      ? Math.round(calcProgress(summary.totalSavings, summary.totalTarget))
+      : 0;
+
   renderSummaryCards(elements.summary, [
+    {
+      label: 'Saldo Dompet',
+      value: formatCurrency(summary.totalWalletBalance),
+      meta:
+        summary.walletCount > 0
+          ? `${summary.walletCount} dompet aktif`
+          : 'Belum ada dompet',
+      iconName: 'wallet',
+      tone: 'primary',
+      metaIcon: 'wallet-cards',
+      href: 'wallets.html',
+      linkLabel: 'Buka halaman dompet'
+    },
     {
       label: 'Total Utang',
       value: formatCurrency(summary.totalDebt),
@@ -139,7 +171,7 @@ function renderSummary(data) {
         summary.activeDebtCount > 0
           ? `${summary.activeDebtCount} utang aktif`
           : 'Tidak ada utang aktif',
-      iconName: 'wallet',
+      iconName: 'arrow-down-left',
       tone: 'danger',
       metaIcon: 'arrow-down-left',
       href: 'debts.html',
@@ -162,29 +194,16 @@ function renderSummary(data) {
       label: 'Total Tabungan',
       value: formatCurrency(summary.totalSavings),
       meta:
-        summary.savingsCount > 0
-          ? `${summary.savingsCount} target tabungan`
-          : 'Belum ada target tabungan',
+        summary.totalTarget > 0
+          ? `${savingsProgress}% dari ${formatCurrency(summary.totalTarget)}`
+          : summary.savingsCount > 0
+            ? `${summary.savingsCount} target tabungan`
+            : 'Belum ada target tabungan',
       iconName: 'piggy-bank',
-      tone: 'primary',
-      metaIcon: 'circle-dollar-sign',
+      tone: 'lavender',
+      metaIcon: 'target',
       href: 'savings.html',
       linkLabel: 'Buka halaman tabungan'
-    },
-    {
-      label: 'Target Tabungan',
-      value: formatCurrency(summary.totalTarget),
-      meta:
-        summary.totalTarget > 0
-          ? `${Math.round(
-              calcProgress(summary.totalSavings, summary.totalTarget)
-            )}% target terkumpul`
-          : 'Target belum ditentukan',
-      iconName: 'target',
-      tone: 'lavender',
-      metaIcon: 'flag',
-      href: 'savings.html',
-      linkLabel: 'Lihat target tabungan'
     }
   ]);
 }
@@ -233,6 +252,64 @@ function renderComparison(comparison) {
     document.getElementById('comparison-chart'),
     comparison
   );
+}
+
+function renderWallets(wallets) {
+  if (!elements.wallets) {
+    return;
+  }
+
+  if (!wallets || wallets.length === 0) {
+    elements.wallets.innerHTML = `
+      <div class="empty-state empty-state-inline">
+        <span class="empty-state-icon">${icon('wallet')}</span>
+        <h3>Belum ada dompet</h3>
+        <p>Buat dompet pertamamu untuk memisahkan saldo tunai, bank, dan e-wallet.</p>
+        <a class="btn btn-secondary btn-sm empty-state-action" href="wallets.html?action=create">Buat Dompet</a>
+      </div>
+    `;
+    refreshIcons();
+    return;
+  }
+
+  elements.wallets.innerHTML = wallets
+    .map((wallet) => {
+      const type = getWalletTypeMeta(wallet.type);
+      const color = getWalletColorMeta(wallet.color);
+      const target = Number(wallet.target_amount) || 0;
+      const balance = Number(wallet.balance) || 0;
+      const progress =
+        target > 0 ? Math.round(calcProgressRaw(balance, target)) : null;
+
+      return `
+        <a class="dashboard-wallet-card wallet-tone-${escapeHtml(
+          color.value
+        )}" href="wallets.html" aria-label="Buka dompet ${escapeHtml(
+          wallet.name
+        )}">
+          <span class="dashboard-wallet-icon">${icon(type.icon)}</span>
+          <span class="dashboard-wallet-meta">
+            <strong>${escapeHtml(wallet.name)}</strong>
+            <small>${escapeHtml(type.label)}</small>
+          </span>
+          <span class="dashboard-wallet-balance">${formatCurrency(balance)}</span>
+          ${
+            progress !== null
+              ? `<span class="dashboard-wallet-progress">
+                   <span class="progress"><span class="progress-bar" style="--progress: ${calcProgress(
+                     balance,
+                     target
+                   )}%"></span></span>
+                   <small>${progress}% target</small>
+                 </span>`
+              : ''
+          }
+        </a>
+      `;
+    })
+    .join('');
+
+  refreshIcons();
 }
 
 function renderActiveSavings(activeSavings) {
@@ -294,7 +371,7 @@ function renderRecent(recent) {
       <div class="empty-state">
         <span class="empty-state-icon">${icon('history')}</span>
         <h3>Belum ada transaksi</h3>
-        <p>Transaksi utang, piutang, dan tabungan akan muncul di sini setelah dicatat.</p>
+        <p>Transaksi dompet, utang, piutang, dan tabungan akan muncul di sini setelah dicatat.</p>
         <a class="btn btn-primary empty-state-action" href="history.html">Lihat Riwayat</a>
       </div>
     `;
@@ -351,10 +428,17 @@ function renderRecentRow(transaction) {
 function renderLoadError(message) {
   renderSummaryCards(elements.summary, [
     {
-      label: 'Total Utang',
+      label: 'Saldo Dompet',
       value: '—',
       meta: 'Data gagal dimuat',
       iconName: 'wallet',
+      tone: 'primary'
+    },
+    {
+      label: 'Total Utang',
+      value: '—',
+      meta: 'Data gagal dimuat',
+      iconName: 'arrow-down-left',
       tone: 'danger'
     },
     {
@@ -369,13 +453,6 @@ function renderLoadError(message) {
       value: '—',
       meta: 'Data gagal dimuat',
       iconName: 'piggy-bank',
-      tone: 'primary'
-    },
-    {
-      label: 'Target Tabungan',
-      value: '—',
-      meta: 'Data gagal dimuat',
-      iconName: 'target',
       tone: 'lavender'
     }
   ]);
@@ -392,6 +469,9 @@ function renderLoadError(message) {
 
   elements.comparison.innerHTML = `
     <div class="inline-empty">Data perbandingan tidak dapat dimuat.</div>
+  `;
+  elements.wallets.innerHTML = `
+    <div class="inline-empty">Data dompet tidak dapat dimuat.</div>
   `;
   elements.activeSavings.innerHTML = `
     <div class="inline-empty">Data target tabungan tidak dapat dimuat.</div>

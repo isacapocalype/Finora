@@ -369,13 +369,24 @@
     border-bottom: 1px solid var(--border);
   }
 
-  .savings-grid {
+  .savings-grid,
+  .wallets-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
   }
 
-  .saving-card {
+  .saving-card,
+  .wallet-card {
     padding: 16px;
+  }
+
+  .dashboard-wallets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .dashboard-wallet-card {
+    padding: 12px;
   }
 
   .form-grid {
@@ -473,16 +484,27 @@
     border-radius: 10px;
     font-size: 9.5px;
     font-weight: 600;
+    transition: color var(--transition-fast),
+      background var(--transition-fast), transform var(--transition-fast);
   }
 
   .bottom-nav-link svg {
     width: 20px;
     height: 20px;
+    transition: transform var(--motion-duration) var(--motion-ease-emphasized);
+  }
+
+  .bottom-nav-link:active {
+    transform: scale(0.94);
   }
 
   .bottom-nav-link.is-active {
     color: var(--primary);
     background: var(--primary-soft);
+  }
+
+  .bottom-nav-link.is-active svg {
+    transform: translateY(-1px) scale(1.06);
   }
 
   /* ---------- Table -> stacked cards ---------- */
@@ -714,7 +736,8 @@
    VERY SMALL MOBILE (<= 359px)
    ========================================================= */
 @media (max-width: 359px) {
-  .summary-grid {
+  .summary-grid,
+  .dashboard-wallets {
     grid-template-columns: minmax(0, 1fr);
   }
 

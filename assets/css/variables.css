@@ -85,8 +85,15 @@
   --shadow-float: 0 20px 60px rgba(54, 28, 101, 0.18);
   --shadow-focus: 0 0 0 4px rgba(124, 58, 237, 0.14);
 
-  --transition: 200ms ease;
-  --transition-fast: 140ms ease;
+  --motion-duration-fast: 140ms;
+  --motion-duration: 220ms;
+  --motion-duration-slow: 360ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --motion-ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  --transition: var(--motion-duration) var(--motion-ease-standard);
+  --transition-fast: var(--motion-duration-fast) var(--motion-ease-standard);
 
   --sidebar-width: 250px;
   --content-max-width: 1440px;

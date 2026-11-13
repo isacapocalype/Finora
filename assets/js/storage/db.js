@@ -5,7 +5,7 @@ import { createId } from './id.js';
 import { normalizeNameKey } from '../utils.js';
 
 const DB_NAME = 'finora-local';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const OBJECT_STORES = [
   'profiles',
@@ -17,7 +17,9 @@ const OBJECT_STORES = [
   'receivable_additions',
   'receivable_payments',
   'savings',
-  'savings_transactions'
+  'savings_transactions',
+  'wallets',
+  'wallet_transactions'
 ];
 
 let dbPromise = null;

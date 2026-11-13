@@ -9,9 +9,14 @@ import {
   formatSignedCurrency,
   getCategoryMeta,
   getFirstName,
+  getHistoryGroup,
   getInitials,
   getStatusMeta,
+  getWalletCategoryMeta,
+  getWalletColorMeta,
+  getWalletTypeMeta,
   greetingForHour,
+  isSameMonth,
   normalizeNameKey,
   parseDate,
   parseNumber,
@@ -126,4 +131,29 @@ test('metadata status dan kategori konsisten', () => {
   assert.equal(getCategoryMeta('debt_addition').label, 'Penambahan utang');
   assert.equal(getCategoryMeta('receivable_addition').label, 'Penambahan piutang');
   assert.equal(getCategoryMeta('unknown').label, 'Transaksi');
+});
+
+test('metadata dompet dan pengelompokan riwayat konsisten', () => {
+  assert.equal(getWalletTypeMeta('cash').label, 'Tunai');
+  assert.equal(getWalletTypeMeta('bank').icon, 'landmark');
+  assert.equal(getWalletTypeMeta('unknown').value, 'other');
+  assert.equal(getWalletColorMeta('blue').value, 'blue');
+  assert.equal(getWalletColorMeta('unknown').value, 'violet');
+  assert.equal(getWalletCategoryMeta('salary').label, 'Gaji');
+  assert.equal(getWalletCategoryMeta('food').label, 'Makan');
+  assert.equal(getWalletCategoryMeta('unknown').label, 'Lainnya');
+  assert.equal(getCategoryMeta('wallet_income').label, 'Pemasukan dompet');
+  assert.equal(getCategoryMeta('wallet_transfer').label, 'Transfer dompet');
+  assert.equal(getHistoryGroup('wallet_income'), 'wallets');
+  assert.equal(getHistoryGroup('wallet_expense'), 'wallets');
+  assert.equal(getHistoryGroup('wallet_transfer'), 'wallets');
+  assert.equal(getHistoryGroup('debt_created'), 'debts');
+  assert.equal(getHistoryGroup('unknown'), 'all');
+});
+
+test('isSameMonth membandingkan bulan transaksi dengan aman', () => {
+  assert.equal(isSameMonth('2026-11-05', '2026-11-20'), true);
+  assert.equal(isSameMonth('2026-10-31', '2026-11-01'), false);
+  assert.equal(isSameMonth('', '2026-11-01'), false);
+  assert.equal(isSameMonth('bukan tanggal', new Date(2026, 10, 2)), false);
 });

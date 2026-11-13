@@ -225,8 +225,8 @@ function renderHistory(result) {
         <div class="empty-state">
           <span class="empty-state-icon">${icon('history')}</span>
           <h3>Belum ada transaksi</h3>
-          <p>Mulai catat utang, piutang, atau tabungan. Semua aktivitas akan muncul di sini.</p>
-          <a class="btn btn-primary empty-state-action" href="debts.html?action=create">Tambah Utang</a>
+          <p>Mulai catat dompet, utang, piutang, atau tabungan. Semua aktivitas akan muncul di sini.</p>
+          <a class="btn btn-primary empty-state-action" href="wallets.html?action=create">Buat Dompet</a>
         </div>
       `;
     elements.pagination.innerHTML = '';

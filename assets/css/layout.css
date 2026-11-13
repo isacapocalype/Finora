@@ -7,6 +7,79 @@ body {
     var(--background);
 }
 
+/* Transisi antar dokumen memakai View Transitions bila didukung. Fallback
+   fade-out ditangani oleh components/motion.js. */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: page-out var(--motion-duration-fast) var(--motion-ease-exit) both;
+}
+
+::view-transition-new(root) {
+  animation: page-in var(--motion-duration) var(--motion-ease-emphasized) both;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.995);
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.998);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-content > * {
+  animation: content-reveal var(--motion-duration-slow)
+    var(--motion-ease-emphasized) backwards;
+}
+
+.page-content > :nth-child(2) {
+  animation-delay: 35ms;
+}
+
+.page-content > :nth-child(3) {
+  animation-delay: 70ms;
+}
+
+.page-content > :nth-child(4) {
+  animation-delay: 105ms;
+}
+
+.page-content > :nth-child(n + 5) {
+  animation-delay: 140ms;
+}
+
+@keyframes content-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fallback navigasi untuk browser tanpa View Transitions. */
+html.page-exiting .app-shell,
+html.page-exiting .bottom-nav {
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-exit),
+    transform var(--motion-duration-fast) var(--motion-ease-exit);
+}
+
 /* =========================================================
    APP SHELL
    ========================================================= */
@@ -132,6 +205,7 @@ body {
   height: 100%;
   background: rgba(30, 20, 50, 0.38);
   backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   opacity: 0;
   transition: opacity var(--transition);
 }
@@ -151,11 +225,41 @@ body {
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   box-shadow: var(--shadow-float);
   transform: translateY(100%);
-  transition: transform 220ms ease;
+  transition: transform var(--motion-duration) var(--motion-ease-emphasized);
+  will-change: transform;
 }
 
 .mobile-sheet.is-open .mobile-sheet-panel {
   transform: translateY(0);
+}
+
+.sheet-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 12px;
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: background var(--transition-fast), color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.sheet-link svg {
+  width: 19px;
+  height: 19px;
+  color: var(--primary);
+}
+
+.sheet-link:hover,
+.sheet-link.is-active {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.sheet-link:active {
+  transform: scale(0.985);
 }
 
 .sheet-handle {

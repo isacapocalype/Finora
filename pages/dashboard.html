@@ -40,6 +40,17 @@
       <main id="page-content" class="page-content">
         <section id="dashboard-summary" class="summary-grid" aria-label="Ringkasan keuangan" aria-live="polite"></section>
 
+        <section class="glass-card card wallet-overview-card">
+          <div class="card-header">
+            <div>
+              <h2>Dompet</h2>
+              <p>Saldo dompet dan target yang sedang berjalan.</p>
+            </div>
+            <a class="card-link" href="wallets.html">Kelola dompet <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+          </div>
+          <div id="dashboard-wallets" class="dashboard-wallets" aria-live="polite"></div>
+        </section>
+
         <div class="dashboard-main-grid">
           <section class="glass-card card chart-card">
             <div class="card-header">
@@ -88,6 +99,11 @@
               <a class="quick-action" href="savings.html?action=deposit">
                 <span class="quick-action-icon"><i data-lucide="banknote" aria-hidden="true"></i></span>
                 <span class="quick-action-meta"><strong>Catat Setoran</strong><small>Tambah saldo tabungan</small></span>
+                <span class="quick-action-arrow"><i data-lucide="chevron-right" aria-hidden="true"></i></span>
+              </a>
+              <a class="quick-action" href="wallets.html?action=expense">
+                <span class="quick-action-icon"><i data-lucide="arrow-up-right" aria-hidden="true"></i></span>
+                <span class="quick-action-meta"><strong>Catat Pengeluaran</strong><small>Kurangi saldo dompet</small></span>
                 <span class="quick-action-arrow"><i data-lucide="chevron-right" aria-hidden="true"></i></span>
               </a>
             </div>

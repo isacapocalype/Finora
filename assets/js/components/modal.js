@@ -30,12 +30,33 @@ export function openModal({
     </div>
   `;
 
+  // Saat satu modal diganti dengan modal lain (mis. detail → transfer),
+  // tutup modal lama yang sedang beranimasi agar tidak menumpuk.
+  root.querySelectorAll('dialog[open].is-closing').forEach((existing) => {
+    existing.close();
+  });
+
   root.appendChild(dialog);
 
+  let closing = false;
   const close = () => {
-    if (dialog.open) {
-      dialog.close();
+    if (!dialog.open || closing) {
+      return;
     }
+
+    closing = true;
+    dialog.classList.add('is-closing');
+
+    const reducedMotion =
+      globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    globalThis.setTimeout(
+      () => {
+        if (dialog.open) {
+          dialog.close();
+        }
+      },
+      reducedMotion ? 0 : 140
+    );
   };
 
   dialog.querySelector('.modal-close')?.addEventListener('click', close);

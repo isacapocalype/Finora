@@ -1,6 +1,6 @@
 # Finora
 
-Finora adalah aplikasi pencatatan keuangan pribadi untuk mengelola utang, piutang, target tabungan, dan riwayat transaksi. Aplikasi berjalan **tanpa login dan tanpa server**: seluruh data disimpan di perangkat melalui IndexedDB, sehingga bisa dibuka langsung kapan saja.
+Finora adalah aplikasi pencatatan keuangan pribadi untuk mengelola dompet, utang, piutang, target tabungan, dan riwayat transaksi. Aplikasi berjalan **tanpa login dan tanpa server**: seluruh data disimpan di perangkat melalui IndexedDB, sehingga bisa dibuka langsung kapan saja.
 
 Dibangun tanpa framework frontend: HTML5, CSS3, dan vanilla JavaScript (ES Modules), lalu dikemas menjadi aplikasi Android dengan Capacitor.
 
@@ -8,19 +8,21 @@ Dibangun tanpa framework frontend: HTML5, CSS3, dan vanilla JavaScript (ES Modul
 
 - **Tanpa akun**: aplikasi langsung membuka dashboard, tidak ada halaman masuk, registrasi, atau reset password.
 - **Penyimpanan lokal**: seluruh catatan tersimpan di penyimpanan aplikasi pada perangkat.
-- **Dashboard**: total utang/piutang tersisa, total tabungan, target tabungan, grafik perkembangan, komposisi utang–piutang, dan aktivitas terbaru.
+- **Dashboard**: saldo dompet, total utang/piutang tersisa, total tabungan, target tabungan, grafik perkembangan, komposisi utang–piutang, dan aktivitas terbaru.
+- **Dompet**: buat beberapa dompet bertipe tunai, bank, e-wallet, atau lainnya; catat pemasukan dan pengeluaran, transfer antar dompet, target saldo opsional, serta lihat riwayat per dompet.
 - **Utang**: tambah, lihat detail, edit, hapus, catat pembayaran, filter, dan pencarian.
 - **Piutang**: tambah, lihat detail, edit, hapus, catat pengembalian, filter, dan pencarian.
 - **Profil orang**: ketuk nama pada daftar utang/piutang untuk membuka profil berisi foto, seluruh catatan orang tersebut, ringkasan pokok, serta riwayat penambahan pokok.
 - **Foto profil**: pilih foto dari galeri; aplikasi memotong dan mengecilkannya menjadi avatar 512×512 JPEG yang disimpan lokal di perangkat.
 - **Penambahan pokok**: tambah nominal ke catatan utang/piutang yang sudah ada. Total pokok diperbarui, status dihitung ulang, dan setiap penambahan dicatat sebagai riwayat tersendiri.
 - **Tabungan**: buat target, setor, tarik, edit, hapus, progres target, dan riwayat transaksi per target.
-- **Riwayat**: filter kategori dan tanggal, pencarian, sorting, dan pagination. Riwayat dibentuk otomatis dari data utang, piutang, penambahan pokok, dan tabungan.
+- **Riwayat**: filter kategori dan tanggal, pencarian, sorting, dan pagination. Riwayat dibentuk otomatis dari data dompet, utang, piutang, penambahan pokok, dan tabungan.
 - **Pengaturan**: ubah nama profil yang dipakai pada sapaan dashboard dan sidebar.
 - **Android**: status bar native, tombol kembali, dan splash screen.
+- **Transisi halus**: View Transitions antar halaman, animasi modal, toast, sheet, kartu, navigasi, dan tombol yang menghormati `prefers-reduced-motion`.
 - **Responsif** untuk desktop, tablet, dan ponsel.
 
-Pembayaran utang, pengembalian piutang, penambahan pokok, serta setoran/penarikan tabungan ditulis dalam satu transaksi IndexedDB. Saldo dan status tidak pernah tersimpan setengah jalan, dan nominal tidak dapat melebihi sisa atau saldo yang tersedia. Penambahan pokok pada catatan yang sudah lunas akan mengaktifkan kembali catatan tersebut.
+Pembayaran utang, pengembalian piutang, penambahan pokok, setoran/penarikan tabungan, transaksi dompet, serta transfer antar dompet ditulis dalam satu transaksi IndexedDB. Saldo dan status tidak pernah tersimpan setengah jalan, dan nominal tidak dapat melebihi sisa atau saldo yang tersedia. Penambahan pokok pada catatan yang sudah lunas akan mengaktifkan kembali catatan tersebut.
 
 ## Teknologi
 
@@ -43,6 +45,7 @@ Pembayaran utang, pengembalian piutang, penambahan pokok, serta setoran/penarika
 ├── index.html
 ├── pages/
 │   ├── dashboard.html
+│   ├── wallets.html
 │   ├── debts.html
 │   ├── receivables.html
 │   ├── savings.html
@@ -68,17 +71,18 @@ Pembayaran utang, pengembalian piutang, penambahan pokok, serta setoran/penarika
 
 ## Penyimpanan Data
 
-Database lokal bernama `finora-local` (versi 2) berisi tabel:
+Database lokal bernama `finora-local` (versi 3) berisi tabel:
 
 - `profiles`
 - `contacts`
 - `debts`, `debt_additions`, dan `debt_payments`
 - `receivables`, `receivable_additions`, dan `receivable_payments`
 - `savings` dan `savings_transactions`
+- `wallets` dan `wallet_transactions`
 
-Semua baris memakai `user_id = 'local-device'`. Profil awal bernama **Pengguna Finora** dan dapat diubah dari halaman Pengaturan. Satu kontak mewakili orang yang sama pada utang maupun piutang, sehingga nama dan foto profil tetap konsisten di kedua halaman.
+Semua baris memakai `user_id = 'local-device'`. Profil awal bernama **Pengguna Finora** dan dapat diubah dari halaman Pengaturan. Satu kontak mewakili orang yang sama pada utang maupun piutang, sehingga nama dan foto profil tetap konsisten di kedua halaman. Dompet berdiri sendiri: tidak otomatis terhubung ke utang, piutang, atau tabungan.
 
-Saat aplikasi lama (versi 1) dibuka dengan versi ini, migrasi otomatis membuat kontak dari nama unik dan menyimpan nominal pokok awal pada setiap catatan. Riwayat pembayaran dan pengembalian lama tetap dipertahankan.
+Saat aplikasi lama (versi 1) dibuka dengan versi ini, migrasi otomatis membuat kontak dari nama unik dan menyimpan nominal pokok awal pada setiap catatan. Upgrade dari versi 2 ke versi 3 hanya menambahkan tabel dompet tanpa mengubah data lama. Riwayat pembayaran, pengembalian, dan tabungan lama tetap dipertahankan.
 
 Data hanya tersimpan di perangkat. Tidak ada sinkronisasi, cadangan cloud, atau pengiriman data ke internet. Menghapus aplikasi atau membersihkan data aplikasi akan menghapus seluruh catatan secara permanen. Pindahkan data secara manual jika ingin berpindah perangkat.
 
@@ -103,9 +107,9 @@ Perintah tersebut menjalankan:
 
 | Perintah | Cakupan |
 |---|---|
-| `npm run test:storage` | CRUD utang, piutang, tabungan, profil, kontak, foto, penambahan pokok, migrasi IndexedDB, riwayat, dan dashboard dengan `fake-indexeddb`. |
-| `npm run test:utils` | Validasi nominal, tanggal, format mata uang, dan utilitas lain. |
-| `npm run test:structure` | Kelengkapan berkas, impor JavaScript, struktur halaman, serta tidak adanya sisa modul login/cloud. |
+| `npm run test:storage` | CRUD dompet, transfer atomik, utang, piutang, tabungan, profil, kontak, foto, penambahan pokok, migrasi IndexedDB, riwayat, dan dashboard dengan `fake-indexeddb`. |
+| `npm run test:utils` | Validasi nominal, tanggal, format mata uang, metadata dompet, dan utilitas lain. |
+| `npm run test:structure` | Kelengkapan berkas, impor JavaScript, struktur halaman, token motion, serta tidak adanya sisa modul login/cloud. |
 
 ## Build Web dan Android
 
@@ -140,11 +144,11 @@ Workflow `.github/workflows/android-release.yml` berjalan saat tag `v*` dibuat a
 Contoh merilis versi baru:
 
 ```bash
-git tag v2.1.0
-git push origin v2.1.0
+git tag v2.2.0
+git push origin v2.2.0
 ```
 
-Versi aplikasi Android saat ini adalah `versionCode 3` / `versionName "2.1"`.
+Versi aplikasi Android saat ini adalah `versionCode 4` / `versionName "2.2"`.
 
 ## Pemasangan APK
 

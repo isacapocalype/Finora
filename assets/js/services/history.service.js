@@ -1,5 +1,5 @@
 // FINORA — HISTORY SERVICE (local)
-// Riwayat dibentuk dari data utang, piutang, dan tabungan di perangkat.
+// Riwayat dibentuk dari data dompet, utang, piutang, dan tabungan di perangkat.
 
 import { HISTORY_GROUPS } from '../utils.js';
 import { readUserRows } from '../storage/db.js';
@@ -44,13 +44,16 @@ export function buildHistoryRows({
   receivableAdditions = [],
   receivablePayments = [],
   savings = [],
-  savingsTransactions = []
+  savingsTransactions = [],
+  wallets = [],
+  walletTransactions = []
 } = {}) {
   const debtMap = new Map(debts.map((debt) => [debt.id, debt]));
   const receivableMap = new Map(
     receivables.map((receivable) => [receivable.id, receivable])
   );
   const savingsMap = new Map(savings.map((item) => [item.id, item]));
+  const walletMap = new Map(wallets.map((wallet) => [wallet.id, wallet]));
   const rows = [];
 
   for (const debt of debts) {
@@ -199,6 +202,74 @@ export function buildHistoryRows({
     );
   }
 
+  for (const transaction of walletTransactions) {
+    const wallet = walletMap.get(transaction.wallet_id);
+
+    if (!wallet) {
+      continue;
+    }
+
+    if (transaction.type === 'income') {
+      rows.push(
+        historyRow({
+          id: transaction.id,
+          userId: transaction.user_id,
+          category: 'wallet_income',
+          title: `Pemasukan ${wallet.name}`,
+          description: transaction.description,
+          amount: transaction.amount,
+          direction: '+',
+          transactionDate: transaction.transaction_date,
+          createdAt: transaction.created_at
+        })
+      );
+      continue;
+    }
+
+    if (transaction.type === 'expense') {
+      rows.push(
+        historyRow({
+          id: transaction.id,
+          userId: transaction.user_id,
+          category: 'wallet_expense',
+          title: `Pengeluaran ${wallet.name}`,
+          description: transaction.description,
+          amount: transaction.amount,
+          direction: '-',
+          transactionDate: transaction.transaction_date,
+          createdAt: transaction.created_at
+        })
+      );
+      continue;
+    }
+
+    // Satu transfer menghasilkan dua baris (keluar dan masuk). Riwayat global
+    // hanya menampilkan baris keluar agar transfer tidak terhitung dua kali.
+    if (transaction.type !== 'transfer_out') {
+      continue;
+    }
+
+    const destination = walletMap.get(transaction.counter_wallet_id);
+
+    if (!destination) {
+      continue;
+    }
+
+    rows.push(
+      historyRow({
+        id: transaction.transfer_id || transaction.id,
+        userId: transaction.user_id,
+        category: 'wallet_transfer',
+        title: `Transfer dari ${wallet.name} ke ${destination.name}`,
+        description: transaction.description,
+        amount: transaction.amount,
+        direction: '',
+        transactionDate: transaction.transaction_date,
+        createdAt: transaction.created_at
+      })
+    );
+  }
+
   return rows;
 }
 
@@ -212,7 +283,9 @@ async function loadHistorySource(userId) {
     receivableAdditions,
     receivablePayments,
     savings,
-    savingsTransactions
+    savingsTransactions,
+    wallets,
+    walletTransactions
   ] = await Promise.all([
     readUserRows(ownerId, 'debts'),
     readUserRows(ownerId, 'debt_additions'),
@@ -221,7 +294,9 @@ async function loadHistorySource(userId) {
     readUserRows(ownerId, 'receivable_additions'),
     readUserRows(ownerId, 'receivable_payments'),
     readUserRows(ownerId, 'savings'),
-    readUserRows(ownerId, 'savings_transactions')
+    readUserRows(ownerId, 'savings_transactions'),
+    readUserRows(ownerId, 'wallets'),
+    readUserRows(ownerId, 'wallet_transactions')
   ]);
 
   return {
@@ -232,7 +307,9 @@ async function loadHistorySource(userId) {
     receivableAdditions,
     receivablePayments,
     savings,
-    savingsTransactions
+    savingsTransactions,
+    wallets,
+    walletTransactions
   };
 }
 

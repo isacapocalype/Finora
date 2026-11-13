@@ -84,6 +84,24 @@ const HISTORY_CATEGORY_META = {
     icon: 'banknote',
     badgeClass: 'badge badge-warning',
     amountClass: 'amount-neutral'
+  },
+  wallet_income: {
+    label: 'Pemasukan dompet',
+    icon: 'arrow-down-left',
+    badgeClass: 'badge badge-success',
+    amountClass: 'amount-inflow'
+  },
+  wallet_expense: {
+    label: 'Pengeluaran dompet',
+    icon: 'arrow-up-right',
+    badgeClass: 'badge badge-danger',
+    amountClass: 'amount-outflow'
+  },
+  wallet_transfer: {
+    label: 'Transfer dompet',
+    icon: 'arrow-left-right',
+    badgeClass: 'badge badge-info',
+    amountClass: 'amount-neutral'
   }
 };
 
@@ -94,8 +112,44 @@ export const HISTORY_GROUPS = {
     'receivable_addition',
     'receivable_payment'
   ],
-  savings: ['savings_deposit', 'savings_withdrawal']
+  savings: ['savings_deposit', 'savings_withdrawal'],
+  wallets: ['wallet_income', 'wallet_expense', 'wallet_transfer']
 };
+
+export const WALLET_TYPES = [
+  { value: 'cash', label: 'Tunai', icon: 'banknote' },
+  { value: 'bank', label: 'Bank', icon: 'landmark' },
+  { value: 'ewallet', label: 'E-Wallet', icon: 'smartphone' },
+  { value: 'other', label: 'Lainnya', icon: 'wallet' }
+];
+
+export const WALLET_COLORS = [
+  { value: 'violet', label: 'Ungu' },
+  { value: 'blue', label: 'Biru' },
+  { value: 'emerald', label: 'Hijau' },
+  { value: 'amber', label: 'Oranye' },
+  { value: 'rose', label: 'Merah muda' },
+  { value: 'slate', label: 'Abu-abu' }
+];
+
+export const WALLET_INCOME_CATEGORIES = [
+  { value: 'salary', label: 'Gaji', icon: 'briefcase-business' },
+  { value: 'bonus', label: 'Bonus', icon: 'gift' },
+  { value: 'sales', label: 'Penjualan', icon: 'store' },
+  { value: 'gift', label: 'Hadiah', icon: 'gift' },
+  { value: 'other_income', label: 'Lainnya', icon: 'circle-plus' }
+];
+
+export const WALLET_EXPENSE_CATEGORIES = [
+  { value: 'food', label: 'Makan', icon: 'utensils' },
+  { value: 'transport', label: 'Transport', icon: 'car-front' },
+  { value: 'shopping', label: 'Belanja', icon: 'shopping-bag' },
+  { value: 'bills', label: 'Tagihan', icon: 'receipt-text' },
+  { value: 'entertainment', label: 'Hiburan', icon: 'clapperboard' },
+  { value: 'health', label: 'Kesehatan', icon: 'heart-pulse' },
+  { value: 'education', label: 'Pendidikan', icon: 'graduation-cap' },
+  { value: 'other_expense', label: 'Lainnya', icon: 'circle-ellipsis' }
+];
 
 export function formatCurrency(value) {
   const numericValue = Number(value);
@@ -135,6 +189,18 @@ export function toLocalISODate(date = new Date()) {
 
 export function todayISO() {
   return toLocalISODate(new Date());
+}
+
+export function isSameMonth(value, reference = new Date()) {
+  const date = parseDate(value);
+  const anchor =
+    reference instanceof Date ? reference : parseDate(reference) || new Date();
+
+  return (
+    Boolean(date) &&
+    date.getFullYear() === anchor.getFullYear() &&
+    date.getMonth() === anchor.getMonth()
+  );
 }
 
 export function parseDate(value) {
@@ -213,6 +279,30 @@ export function getCategoryMeta(category) {
   );
 }
 
+export function getWalletTypeMeta(type) {
+  return (
+    WALLET_TYPES.find((item) => item.value === type) || {
+      value: 'other',
+      label: 'Dompet',
+      icon: 'wallet'
+    }
+  );
+}
+
+export function getWalletColorMeta(color) {
+  return (
+    WALLET_COLORS.find((item) => item.value === color) || WALLET_COLORS[0]
+  );
+}
+
+export function getWalletCategoryMeta(category) {
+  return (
+    [...WALLET_INCOME_CATEGORIES, ...WALLET_EXPENSE_CATEGORIES].find(
+      (item) => item.value === category
+    ) || { value: 'other', label: 'Lainnya', icon: 'circle-dot' }
+  );
+}
+
 export function getHistoryGroup(category) {
   if (HISTORY_GROUPS.debts.includes(category)) {
     return 'debts';
@@ -224,6 +314,10 @@ export function getHistoryGroup(category) {
 
   if (HISTORY_GROUPS.savings.includes(category)) {
     return 'savings';
+  }
+
+  if (HISTORY_GROUPS.wallets.includes(category)) {
+    return 'wallets';
   }
 
   return 'all';

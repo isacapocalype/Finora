@@ -95,6 +95,104 @@
   height: 15px;
 }
 
+.wallet-overview-card {
+  overflow: hidden;
+}
+
+.dashboard-wallets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.dashboard-wallet-card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 100% 0, var(--wallet-wash), transparent 62%),
+    #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast),
+    border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.dashboard-wallet-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--wallet-soft);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.dashboard-wallet-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--wallet-ink);
+  background: var(--wallet-soft);
+  border-radius: 11px;
+}
+
+.dashboard-wallet-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.dashboard-wallet-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.dashboard-wallet-meta strong {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-wallet-meta small {
+  color: var(--text-secondary);
+  font-size: 10.5px;
+}
+
+.dashboard-wallet-balance {
+  margin-top: 2px;
+  color: var(--wallet-ink);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-wallet-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.dashboard-wallet-progress .progress {
+  height: 5px;
+}
+
+.dashboard-wallet-progress small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.dashboard-wallet-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
 .quick-actions-note {
   margin-top: auto;
   padding-top: 16px;
