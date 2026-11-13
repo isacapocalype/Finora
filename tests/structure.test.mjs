@@ -417,8 +417,8 @@ test('halaman dompet, navigasi, dan sistem motion terhubung', async () => {
   assert.match(app, /finishRouteProgress/);
   assert.match(components, /prefers-reduced-motion:\s*reduce/);
   assert.match(modal, /is-closing/);
-  assert.match(gradle, /versionCode 4/);
-  assert.match(gradle, /versionName "2\.2"/);
+  assert.match(gradle, /versionCode 5/);
+  assert.match(gradle, /versionName "2\.3"/);
 });
 
 test('tidak ada placeholder atau fungsi transaksi palsu di frontend', async () => {
@@ -453,7 +453,7 @@ test('package.json menyediakan perintah pengujian lokal', async () => {
     await readFile(path.join(root, 'package.json'), 'utf8')
   );
 
-  assert.equal(pkg.version, '2.2.0');
+  assert.equal(pkg.version, '2.3.0');
   assert.match(pkg.scripts.test, /test:storage/);
   assert.match(pkg.scripts.test, /test:utils/);
   assert.match(pkg.scripts.test, /test:structure/);

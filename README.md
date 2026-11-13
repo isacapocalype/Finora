@@ -144,11 +144,11 @@ Workflow `.github/workflows/android-release.yml` berjalan saat tag `v*` dibuat a
 Contoh merilis versi baru:
 
 ```bash
-git tag v2.2.0
-git push origin v2.2.0
+git tag v2.3.0
+git push origin v2.3.0
 ```
 
-Versi aplikasi Android saat ini adalah `versionCode 4` / `versionName "2.2"`.
+Versi aplikasi Android saat ini adalah `versionCode 5` / `versionName "2.3"`.
 
 ## Pemasangan APK
 
