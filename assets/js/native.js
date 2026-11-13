@@ -9,14 +9,22 @@ import {
   Style
 } from '../vendor/capacitor.bundle.js';
 import { showToast } from './components/toast.js';
+import { startRouteProgress } from './components/motion.js';
+import { onThemeChange } from './theme.js';
 
 let initialized = false;
 let lastBackPress = 0;
 
 function configureStatusBar() {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+
   StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
-  StatusBar.setStyle({ style: Style.Light }).catch(() => {});
-  StatusBar.setBackgroundColor({ color: '#f8f7fc' }).catch(() => {});
+  StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(
+    () => {}
+  );
+  StatusBar.setBackgroundColor({
+    color: isDark ? '#0f0d17' : '#f8f7fc'
+  }).catch(() => {});
 }
 
 function closeTopLayer() {
@@ -44,6 +52,7 @@ export function initNativeShell({ activePage }) {
 
   initialized = true;
   configureStatusBar();
+  onThemeChange(configureStatusBar);
 
   App.addListener('backButton', async () => {
     if (closeTopLayer()) {
@@ -51,6 +60,7 @@ export function initNativeShell({ activePage }) {
     }
 
     if (activePage !== 'dashboard') {
+      startRouteProgress();
       window.location.assign(new URL('dashboard.html', window.location.href).href);
       return;
     }

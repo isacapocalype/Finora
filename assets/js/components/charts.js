@@ -2,6 +2,7 @@ import { formatCurrency, parseDate } from '../utils.js';
 import { icon, refreshIcons } from '../icons.js';
 
 const chartInstances = new WeakMap();
+const chartRenderers = new Map();
 const compactCurrency = new Intl.NumberFormat('id-ID', {
   notation: 'compact',
   maximumFractionDigits: 1
@@ -13,6 +14,37 @@ function hasChartLibrary() {
 
 function formatCompact(value) {
   return `Rp${compactCurrency.format(Number(value) || 0)}`;
+}
+
+function readToken(name, fallback) {
+  if (typeof document === 'undefined') {
+    return fallback;
+  }
+
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+
+  return value || fallback;
+}
+
+function chartColors() {
+  return {
+    text: readToken('--chart-text', '#817B91'),
+    grid: readToken('--chart-grid', 'rgba(236, 232, 243, 0.8)'),
+    tooltipBg: readToken('--chart-tooltip-bg', '#25213A'),
+    tooltipText: readToken('--chart-tooltip-text', '#ffffff'),
+    line: readToken('--chart-line', '#7C3AED'),
+    area: readToken('--chart-area', 'rgba(124, 58, 237, 0.22)'),
+    areaSoft: readToken('--chart-area-soft', 'rgba(124, 58, 237, 0.1)'),
+    areaFade: readToken('--chart-area-fade', 'rgba(124, 58, 237, 0)'),
+    pointBg: readToken('--chart-point-bg', '#ffffff'),
+    danger: readToken('--chart-danger', '#EF4444'),
+    dangerHover: readToken('--chart-danger-hover', '#DC2626'),
+    info: readToken('--chart-info', '#3B82F6'),
+    infoHover: readToken('--chart-info-hover', '#2563EB'),
+    doughnutBorder: readToken('--chart-doughnut-border', '#ffffff')
+  };
 }
 
 function destroyChart(canvas) {
@@ -48,21 +80,28 @@ function showEmptyState(canvas, message) {
 }
 
 function applyChartDefaults() {
-  if (!hasChartLibrary() || applyChartDefaults.done) {
+  if (!hasChartLibrary()) {
     return;
   }
 
-  applyChartDefaults.done = true;
-  window.Chart.defaults.font.family =
-    '"Plus Jakarta Sans", Inter, system-ui, sans-serif';
-  window.Chart.defaults.font.size = 11;
-  window.Chart.defaults.color = '#817B91';
+  if (!applyChartDefaults.done) {
+    applyChartDefaults.done = true;
+    window.Chart.defaults.font.family =
+      '"Plus Jakarta Sans", Inter, system-ui, sans-serif';
+    window.Chart.defaults.font.size = 11;
+  }
+
+  window.Chart.defaults.color = chartColors().text;
 }
 
 function baseOptions(extra = {}) {
-  return {
+  const colors = chartColors();
+  const { scales: extraScales, ...rest } = extra;
+  const options = {
     responsive: true,
     maintainAspectRatio: false,
+    resizeDelay: 150,
+    devicePixelRatio: Math.min(globalThis.devicePixelRatio || 1, 2),
     interaction: {
       mode: 'index',
       intersect: false
@@ -70,7 +109,9 @@ function baseOptions(extra = {}) {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#25213A',
+        backgroundColor: colors.tooltipBg,
+        titleColor: colors.tooltipText,
+        bodyColor: colors.tooltipText,
         padding: 11,
         cornerRadius: 9,
         titleFont: { size: 11, weight: '600' },
@@ -85,20 +126,28 @@ function baseOptions(extra = {}) {
       x: {
         grid: { display: false },
         border: { display: false },
-        ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
+        ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+        ...extraScales?.x
       },
       y: {
         beginAtZero: true,
-        grid: { color: 'rgba(236, 232, 243, 0.8)' },
+        grid: { color: colors.grid },
         border: { display: false },
         ticks: {
           maxTicksLimit: 5,
           callback: (value) => formatCompact(value)
-        }
+        },
+        ...extraScales?.y
       }
     },
-    ...extra
+    ...rest
   };
+
+  return options;
+}
+
+function trackRenderer(canvas, render) {
+  chartRenderers.set(canvas, render);
 }
 
 export function renderSavingsChart(canvas, series) {
@@ -106,6 +155,7 @@ export function renderSavingsChart(canvas, series) {
     return;
   }
 
+  trackRenderer(canvas, () => renderSavingsChart(canvas, series));
   destroyChart(canvas);
 
   if (!hasChartLibrary() || !series?.hasTransactions) {
@@ -120,10 +170,11 @@ export function renderSavingsChart(canvas, series) {
 
   applyChartDefaults();
   clearEmptyState(canvas);
+  const colors = chartColors();
   const context = canvas.getContext('2d');
   const gradient = context.createLinearGradient(0, 0, 0, 260);
-  gradient.addColorStop(0, 'rgba(124, 58, 237, 0.22)');
-  gradient.addColorStop(1, 'rgba(124, 58, 237, 0)');
+  gradient.addColorStop(0, colors.area);
+  gradient.addColorStop(1, colors.areaFade);
 
   const chart = new window.Chart(canvas, {
     type: 'line',
@@ -132,13 +183,13 @@ export function renderSavingsChart(canvas, series) {
       datasets: [
         {
           data: series.values,
-          borderColor: '#7C3AED',
+          borderColor: colors.line,
           backgroundColor: gradient,
           borderWidth: 2.5,
           pointRadius: 3,
           pointHoverRadius: 5,
-          pointBackgroundColor: '#fff',
-          pointBorderColor: '#7C3AED',
+          pointBackgroundColor: colors.pointBg,
+          pointBorderColor: colors.line,
           pointBorderWidth: 2,
           fill: true,
           tension: 0.35
@@ -156,6 +207,7 @@ export function renderComparisonChart(canvas, comparison) {
     return;
   }
 
+  trackRenderer(canvas, () => renderComparisonChart(canvas, comparison));
   destroyChart(canvas);
 
   const debt = Number(comparison?.debt) || 0;
@@ -173,6 +225,7 @@ export function renderComparisonChart(canvas, comparison) {
 
   applyChartDefaults();
   clearEmptyState(canvas);
+  const colors = chartColors();
 
   const chart = new window.Chart(canvas, {
     type: 'doughnut',
@@ -181,10 +234,10 @@ export function renderComparisonChart(canvas, comparison) {
       datasets: [
         {
           data: [debt, receivable],
-          backgroundColor: ['#EF4444', '#3B82F6'],
-          hoverBackgroundColor: ['#DC2626', '#2563EB'],
+          backgroundColor: [colors.danger, colors.info],
+          hoverBackgroundColor: [colors.dangerHover, colors.infoHover],
           borderWidth: 3,
-          borderColor: '#ffffff',
+          borderColor: colors.doughnutBorder,
           hoverOffset: 4
         }
       ]
@@ -192,16 +245,21 @@ export function renderComparisonChart(canvas, comparison) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      resizeDelay: 150,
+      devicePixelRatio: Math.min(globalThis.devicePixelRatio || 1, 2),
       cutout: '72%',
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#25213A',
+          backgroundColor: colors.tooltipBg,
+          titleColor: colors.tooltipText,
+          bodyColor: colors.tooltipText,
           padding: 11,
           cornerRadius: 9,
           displayColors: false,
           callbacks: {
-            label: (context) => `${context.label}: ${formatCurrency(context.parsed)}`
+            label: (context) =>
+              `${context.label}: ${formatCurrency(context.parsed)}`
           }
         }
       }
@@ -216,6 +274,7 @@ export function renderSavingsDetailChart(canvas, transactions) {
     return;
   }
 
+  trackRenderer(canvas, () => renderSavingsDetailChart(canvas, transactions));
   destroyChart(canvas);
 
   const sorted = (transactions || [])
@@ -256,6 +315,7 @@ export function renderSavingsDetailChart(canvas, transactions) {
 
   applyChartDefaults();
   clearEmptyState(canvas);
+  const colors = chartColors();
 
   const chart = new window.Chart(canvas, {
     type: 'line',
@@ -264,8 +324,8 @@ export function renderSavingsDetailChart(canvas, transactions) {
       datasets: [
         {
           data: values,
-          borderColor: '#7C3AED',
-          backgroundColor: 'rgba(124, 58, 237, 0.1)',
+          borderColor: colors.line,
+          backgroundColor: colors.areaSoft,
           borderWidth: 2,
           pointRadius: 2.5,
           fill: true,
@@ -275,20 +335,8 @@ export function renderSavingsDetailChart(canvas, transactions) {
     },
     options: baseOptions({
       scales: {
-        x: {
-          grid: { display: false },
-          border: { display: false },
-          ticks: { maxRotation: 0, maxTicksLimit: 6 }
-        },
-        y: {
-          beginAtZero: true,
-          grid: { color: 'rgba(236, 232, 243, 0.8)' },
-          border: { display: false },
-          ticks: {
-            maxTicksLimit: 4,
-            callback: (value) => formatCompact(value)
-          }
-        }
+        x: { ticks: { maxRotation: 0, maxTicksLimit: 6 } },
+        y: { ticks: { maxTicksLimit: 4 } }
       }
     })
   });
@@ -296,7 +344,30 @@ export function renderSavingsDetailChart(canvas, transactions) {
   chartInstances.set(canvas, chart);
 }
 
+function refreshChartsForTheme() {
+  if (!hasChartLibrary()) {
+    return;
+  }
+
+  applyChartDefaults();
+
+  Array.from(chartRenderers.entries()).forEach(([canvas, render]) => {
+    if (!canvas.isConnected) {
+      chartRenderers.delete(canvas);
+      return;
+    }
+
+    render();
+  });
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('finora:themechange', refreshChartsForTheme);
+}
+
 export function destroyAllCharts() {
-  // Chart instances are released when their canvas leaves the DOM.
-  // Explicit destruction happens per canvas before re-render.
+  Array.from(chartRenderers.keys()).forEach((canvas) => {
+    destroyChart(canvas);
+  });
+  chartRenderers.clear();
 }

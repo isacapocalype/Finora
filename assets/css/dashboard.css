@@ -36,17 +36,19 @@
   align-items: center;
   gap: 12px;
   padding: 11px 12px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   transition: border-color var(--transition), background var(--transition),
     transform var(--transition-fast);
 }
 
-.quick-action:hover {
-  border-color: var(--lavender);
-  background: var(--lavender-soft);
-  transform: translateX(2px);
+@media (hover: hover) and (pointer: fine) {
+  .quick-action:hover {
+    border-color: var(--lavender);
+    background: var(--lavender-soft);
+    transform: translateX(2px);
+  }
 }
 
 .quick-action-icon {
@@ -112,17 +114,19 @@
   padding: 14px;
   background:
     radial-gradient(circle at 100% 0, var(--wallet-wash), transparent 62%),
-    #fff;
+    var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   transition: transform var(--transition-fast),
     border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.dashboard-wallet-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--wallet-soft);
-  box-shadow: var(--shadow-card-hover);
+@media (hover: hover) and (pointer: fine) {
+  .dashboard-wallet-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--wallet-soft);
+    box-shadow: var(--shadow-card-hover);
+  }
 }
 
 .dashboard-wallet-icon {

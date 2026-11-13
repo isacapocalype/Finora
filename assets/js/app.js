@@ -9,6 +9,7 @@ import {
 import { icon, refreshIcons } from './icons.js';
 import { escapeHtml, getErrorMessage } from './utils.js';
 import { initNativeShell } from './native.js';
+import { initTheme } from './theme.js';
 
 const PAGE_LOADERS = {
   dashboard: () => import('./dashboard.js'),
@@ -21,6 +22,8 @@ const PAGE_LOADERS = {
 };
 
 const page = document.body.dataset.page;
+
+initTheme();
 
 bootstrap().catch((error) => {
   console.error('Failed to initialize Finora:', error);

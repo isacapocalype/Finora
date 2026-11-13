@@ -1,5 +1,6 @@
 import { escapeHtml, getInitials } from '../utils.js';
 import { icon, refreshIcons } from '../icons.js';
+import { initScrollTop } from './scroll-top.js';
 
 const NAV_ITEMS = [
   { page: 'dashboard', href: 'dashboard.html', label: 'Dashboard', icon: 'layout-dashboard' },
@@ -85,6 +86,7 @@ export function renderLayout({ profile, activePage }) {
 
   renderIdentity({ profile });
   ensureMobileSheet(activePage);
+  initScrollTop();
   refreshIcons();
 }
 
@@ -96,7 +98,13 @@ export function renderIdentity({ profile }) {
     element.textContent = displayName;
   });
   document.querySelectorAll('[data-user-initials]').forEach((element) => {
-    element.textContent = initials;
+    if (profile?.photo) {
+      element.innerHTML = `<img src="${escapeHtml(
+        profile.photo
+      )}" alt="" loading="lazy" decoding="async">`;
+    } else {
+      element.textContent = initials;
+    }
   });
   document.querySelectorAll('[data-user-first-name]').forEach((element) => {
     element.textContent = displayName.split(/\s+/)[0] || 'Pengguna';

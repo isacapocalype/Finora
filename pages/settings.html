@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#7C3AED">
   <title>Pengaturan — Finora</title>
   <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <script src="../assets/js/theme-init.js"></script>
   <link rel="stylesheet" href="../assets/css/variables.css">
   <link rel="stylesheet" href="../assets/css/reset.css">
   <link rel="stylesheet" href="../assets/css/layout.css">
@@ -42,8 +43,21 @@
                 <div>
                   <strong data-user-name>Pengguna Finora</strong>
                   <small>Data tersimpan di perangkat ini</small>
+                  <div class="profile-photo-actions">
+                    <input id="profile-photo-input" type="file" accept="image/*" hidden>
+                    <button type="button" class="btn btn-secondary" id="profile-photo-upload">
+                      <i data-lucide="camera" aria-hidden="true"></i>
+                      <span>Tambah Foto</span>
+                    </button>
+                    <button type="button" class="btn btn-ghost" id="profile-photo-remove" hidden>
+                      <i data-lucide="trash-2" aria-hidden="true"></i>
+                      <span>Hapus Foto</span>
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              <div id="profile-photo-message" class="form-status" role="alert" hidden></div>
 
               <form id="profile-form" class="settings-form" novalidate>
                 <div class="form-field">
@@ -81,9 +95,13 @@
               <div class="preference-row">
                 <div>
                   <strong>Tema tampilan</strong>
-                  <small>Finora saat ini menggunakan tema terang.</small>
+                  <small data-theme-hint>Mengikuti pengaturan perangkat.</small>
                 </div>
-                <span class="badge badge-purple">Light</span>
+                <div class="theme-options" role="group" aria-label="Tema tampilan">
+                  <button type="button" class="theme-option" data-theme-option="light" aria-pressed="false">Terang</button>
+                  <button type="button" class="theme-option" data-theme-option="dark" aria-pressed="false">Gelap</button>
+                  <button type="button" class="theme-option" data-theme-option="system" aria-pressed="false">Sistem</button>
+                </div>
               </div>
 
               <div class="preference-row">

@@ -14,6 +14,7 @@ function defaultProfile(userId) {
     id: resolveUserId(userId),
     full_name: DEFAULT_NAME,
     currency: 'IDR',
+    photo: null,
     created_at: now,
     updated_at: now
   };
@@ -38,12 +39,28 @@ export async function getOrCreateProfile(user) {
   return profile;
 }
 
-export async function updateProfile(userId, { fullName }) {
+export async function updateProfile(userId, { fullName } = {}) {
   const ownerId = resolveUserId(userId);
   const current = await getOrCreateProfile({ id: ownerId });
   const updated = {
     ...current,
     full_name: String(fullName || '').trim() || DEFAULT_NAME,
+    updated_at: new Date().toISOString()
+  };
+
+  await upsertRow(TABLE, updated);
+
+  return updated;
+}
+
+export async function updateProfilePhoto(userId, photo) {
+  const ownerId = resolveUserId(userId);
+  const current = await getOrCreateProfile({ id: ownerId });
+  const normalizedPhoto =
+    typeof photo === 'string' && photo.startsWith('data:image/') ? photo : null;
+  const updated = {
+    ...current,
+    photo: normalizedPhoto,
     updated_at: new Date().toISOString()
   };
 

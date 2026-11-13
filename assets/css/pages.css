@@ -48,7 +48,7 @@
   align-items: center;
   gap: 7px;
   padding: 0 10px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
@@ -89,9 +89,11 @@
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.saving-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-card-hover);
+@media (hover: hover) and (pointer: fine) {
+  .saving-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-hover);
+  }
 }
 
 .saving-card-top {
@@ -192,7 +194,7 @@
 }
 
 .saving-deadline.is-soon {
-  color: #b45309;
+  color: var(--warning-strong);
 }
 
 .saving-detail-header {
@@ -213,7 +215,7 @@
 .saving-detail-progress {
   margin: 18px 0;
   padding: 15px;
-  background: #faf9fe;
+  background: var(--surface-soft);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
@@ -248,7 +250,7 @@
   align-items: center;
   gap: 12px;
   padding: 13px 15px;
-  background: #fff;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
   transition: background var(--transition-fast);
 }
@@ -258,7 +260,7 @@
 }
 
 .history-item:hover {
-  background: rgba(243, 239, 255, 0.5);
+  background: var(--row-hover);
 }
 
 .history-icon {
@@ -348,7 +350,7 @@
 .filter-tab {
   padding: 7px 12px;
   color: var(--text-secondary);
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   font-size: 11.5px;
@@ -417,8 +419,8 @@
   gap: 14px;
   padding: 15px;
   margin-bottom: 20px;
-  background: linear-gradient(135deg, var(--primary-soft), #faf8ff);
-  border: 1px solid rgba(196, 181, 253, 0.35);
+  background: linear-gradient(135deg, var(--primary-soft), var(--hero-end));
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
 
@@ -491,7 +493,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 18px 20px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--glass);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }
@@ -618,7 +620,7 @@
   inset: 0;
   background:
     radial-gradient(circle at 100% 0, var(--wallet-wash), transparent 52%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 45%);
+    linear-gradient(180deg, var(--wallet-sheen), transparent 45%);
   pointer-events: none;
 }
 
@@ -626,10 +628,12 @@
   position: relative;
 }
 
-.wallet-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--wallet-soft);
-  box-shadow: var(--shadow-card-hover);
+@media (hover: hover) and (pointer: fine) {
+  .wallet-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--wallet-soft);
+    box-shadow: var(--shadow-card-hover);
+  }
 }
 
 .wallet-card-top {
@@ -692,8 +696,8 @@
   gap: 2px;
   margin-top: 18px;
   padding: 13px 14px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: var(--surface-translucent);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
 }
 
@@ -737,7 +741,7 @@
   place-items: center;
   width: 40px;
   height: 40px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 50%;
   cursor: pointer;
@@ -798,4 +802,98 @@
   padding: 14px;
   background: var(--wallet-wash);
   border-radius: var(--radius-md);
+}
+
+/* Tone dompet dibuat lebih redup agar tetap nyaman di tema gelap. */
+[data-theme="dark"] .wallet-tone-violet {
+  --wallet-accent: #a78bfa;
+  --wallet-ink: #ddd6fe;
+  --wallet-soft: #2a1f45;
+  --wallet-wash: rgba(124, 58, 237, 0.18);
+}
+
+[data-theme="dark"] .wallet-tone-blue {
+  --wallet-accent: #60a5fa;
+  --wallet-ink: #bfdbfe;
+  --wallet-soft: #12233f;
+  --wallet-wash: rgba(59, 130, 246, 0.18);
+}
+
+[data-theme="dark"] .wallet-tone-emerald {
+  --wallet-accent: #34d399;
+  --wallet-ink: #a7f3d0;
+  --wallet-soft: #123524;
+  --wallet-wash: rgba(16, 185, 129, 0.16);
+}
+
+[data-theme="dark"] .wallet-tone-amber {
+  --wallet-accent: #fbbf24;
+  --wallet-ink: #fde68a;
+  --wallet-soft: #3a2a0c;
+  --wallet-wash: rgba(245, 158, 11, 0.16);
+}
+
+[data-theme="dark"] .wallet-tone-rose {
+  --wallet-accent: #fb7185;
+  --wallet-ink: #fecdd3;
+  --wallet-soft: #3a1820;
+  --wallet-wash: rgba(244, 63, 94, 0.16);
+}
+
+[data-theme="dark"] .wallet-tone-slate {
+  --wallet-accent: #94a3b8;
+  --wallet-ink: #e2e8f0;
+  --wallet-soft: #26303f;
+  --wallet-wash: rgba(148, 163, 184, 0.14);
+}
+
+/* Kartu daftar panjang boleh dilewati render saat berada di luar layar. */
+.data-card,
+.saving-card,
+.wallet-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
+}
+
+/* Foto profil dan kontrol tema di halaman Pengaturan. */
+.profile-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.profile-photo-actions .btn {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+}
+
+.theme-options {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.theme-option {
+  padding: 6px 11px;
+  color: var(--text-secondary);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background var(--transition), color var(--transition);
+}
+
+.theme-option:hover {
+  color: var(--primary-dark);
+}
+
+.theme-option.is-active {
+  color: var(--primary-dark);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
 }

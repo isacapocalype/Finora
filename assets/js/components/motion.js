@@ -1,13 +1,19 @@
 // FINORA — PAGE MOTION
 // Fallback fade-out untuk browser yang belum mendukung View Transitions,
-// plus indikator progress untuk setiap perpindahan halaman.
+// plus overlay loading GIF di tengah layar untuk setiap perpindahan halaman.
+
+const LOADER_GIF = new URL('../../images/loading.gif', import.meta.url).href;
+const LOADER_STATIC = new URL(
+  '../../images/loading-static.png',
+  import.meta.url
+).href;
+const LOADER_TIMEOUT = 12000;
 
 let initialized = false;
-let progressInitialized = false;
-let progressElement = null;
-let progressBar = null;
-let progressFinishTimer = null;
-let progressResetTimer = null;
+let loaderInitialized = false;
+let loaderElement = null;
+let loaderHideTimer = null;
+let loaderSafetyTimer = null;
 
 function prefersReducedMotion() {
   return (
@@ -22,24 +28,39 @@ function supportsViewTransitions() {
   );
 }
 
-function ensureProgressElement() {
-  if (progressElement?.isConnected) {
-    return progressElement;
+function ensureLoaderElement() {
+  if (loaderElement?.isConnected) {
+    return loaderElement;
   }
 
-  progressElement = document.getElementById('route-progress');
+  loaderElement = document.getElementById('route-loader');
 
-  if (!progressElement) {
-    progressElement = document.createElement('div');
-    progressElement.id = 'route-progress';
-    progressElement.className = 'route-progress';
-    progressElement.setAttribute('aria-hidden', 'true');
-    progressElement.innerHTML = '<span class="route-progress-bar"></span>';
-    document.body.appendChild(progressElement);
+  if (!loaderElement) {
+    loaderElement = document.createElement('div');
+    loaderElement.id = 'route-loader';
+    loaderElement.className = 'route-loader';
+    loaderElement.setAttribute('aria-hidden', 'true');
+    loaderElement.innerHTML = `
+      <div class="route-loader-panel" role="status" aria-live="polite">
+        <picture>
+          <source media="(prefers-reduced-motion: reduce)" srcset="${LOADER_STATIC}">
+          <img class="route-loader-media" src="${LOADER_GIF}" alt="" width="120" height="120" decoding="async">
+        </picture>
+        <p>Memuat halaman...</p>
+      </div>
+    `;
+    document.body.appendChild(loaderElement);
   }
 
-  progressBar = progressElement.querySelector('.route-progress-bar');
-  return progressElement;
+  return loaderElement;
+}
+
+function setLoaderActive(active) {
+  const element = ensureLoaderElement();
+
+  element.classList.toggle('is-active', active);
+  element.setAttribute('aria-hidden', active ? 'false' : 'true');
+  document.documentElement.classList.toggle('is-route-loading', active);
 }
 
 function isInternalNavigation(link) {
@@ -83,12 +104,12 @@ function handleNavigationProgress(event) {
 }
 
 export function initRouteProgress() {
-  if (progressInitialized) {
+  if (loaderInitialized) {
     return;
   }
 
-  progressInitialized = true;
-  ensureProgressElement();
+  loaderInitialized = true;
+  ensureLoaderElement();
   document.addEventListener('click', handleNavigationProgress);
 
   globalThis.addEventListener('pageshow', (event) => {
@@ -99,47 +120,41 @@ export function initRouteProgress() {
 }
 
 export function startRouteProgress() {
-  if (prefersReducedMotion()) {
-    return;
-  }
+  const element = ensureLoaderElement();
 
-  const element = ensureProgressElement();
+  globalThis.clearTimeout(loaderHideTimer);
+  globalThis.clearTimeout(loaderSafetyTimer);
 
-  globalThis.clearTimeout(progressFinishTimer);
-  globalThis.clearTimeout(progressResetTimer);
+  element.classList.remove('is-leaving');
+  setLoaderActive(true);
 
-  element.classList.remove('is-active', 'is-complete', 'is-leaving');
-  element.classList.add('is-resetting');
-  void progressBar.offsetWidth;
-  element.classList.remove('is-resetting');
-  element.classList.add('is-active');
+  // Jaring pengaman agar overlay tidak tertinggal bila inisialisasi macet.
+  loaderSafetyTimer = globalThis.setTimeout(() => {
+    if (element.classList.contains('is-active')) {
+      finishRouteProgress({ immediate: true });
+    }
+  }, LOADER_TIMEOUT);
 }
 
 export function finishRouteProgress({ immediate = false } = {}) {
-  if (
-    !progressElement ||
-    prefersReducedMotion() ||
-    !progressElement.classList.contains('is-active')
-  ) {
+  if (!loaderElement || !loaderElement.classList.contains('is-active')) {
     return;
   }
 
-  globalThis.clearTimeout(progressFinishTimer);
-  globalThis.clearTimeout(progressResetTimer);
+  globalThis.clearTimeout(loaderSafetyTimer);
+  globalThis.clearTimeout(loaderHideTimer);
 
-  if (immediate) {
-    progressElement.classList.remove('is-active', 'is-complete', 'is-leaving');
+  if (immediate || prefersReducedMotion()) {
+    loaderElement.classList.remove('is-leaving');
+    setLoaderActive(false);
     return;
   }
 
-  progressElement.classList.add('is-complete');
-
-  progressFinishTimer = globalThis.setTimeout(() => {
-    progressElement.classList.add('is-leaving');
-    progressResetTimer = globalThis.setTimeout(() => {
-      progressElement.classList.remove('is-active', 'is-complete', 'is-leaving');
-    }, 220);
-  }, 160);
+  loaderElement.classList.add('is-leaving');
+  loaderHideTimer = globalThis.setTimeout(() => {
+    loaderElement.classList.remove('is-leaving');
+    setLoaderActive(false);
+  }, 180);
 }
 
 export function initPageTransitions() {

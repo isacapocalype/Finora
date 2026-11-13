@@ -54,6 +54,31 @@ test('profil lokal dibuat sekali dan dapat diperbarui', async () => {
     (await profileService.getProfile(LOCAL_USER_ID)).full_name,
     'Budi Santoso'
   );
+
+  const photo = 'data:image/jpeg;base64,Zm90by1wcm9maWw=';
+  const withPhoto = await profileService.updateProfilePhoto(
+    LOCAL_USER_ID,
+    photo
+  );
+
+  assert.equal(withPhoto.photo, photo);
+  assert.equal(withPhoto.full_name, 'Budi Santoso');
+  assert.equal(
+    (await profileService.getProfile(LOCAL_USER_ID)).photo,
+    photo
+  );
+
+  const withoutPhoto = await profileService.updateProfilePhoto(
+    LOCAL_USER_ID,
+    null
+  );
+
+  assert.equal(withoutPhoto.photo, null);
+  assert.equal(withoutPhoto.full_name, 'Budi Santoso');
+  assert.equal(
+    (await profileService.getProfile(LOCAL_USER_ID)).photo,
+    null
+  );
 });
 
 test('utang: buat, bayar, validasi sisa, dan hapus beserta riwayat', async () => {

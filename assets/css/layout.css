@@ -2,8 +2,8 @@
 
 body {
   background:
-    radial-gradient(circle at 8% 8%, rgba(196, 181, 253, 0.18), transparent 34%),
-    radial-gradient(circle at 92% 82%, rgba(167, 139, 250, 0.12), transparent 36%),
+    radial-gradient(circle at 8% 8%, var(--body-glow-1), transparent 34%),
+    radial-gradient(circle at 92% 82%, var(--body-glow-2), transparent 36%),
     var(--background);
 }
 
@@ -80,59 +80,116 @@ html.page-exiting .bottom-nav {
     transform var(--motion-duration-fast) var(--motion-ease-exit);
 }
 
-/* Indikator loading di atas layar saat berpindah halaman. */
-.route-progress {
+/* Overlay loading di tengah layar saat berpindah halaman. */
+.route-loader {
   position: fixed;
-  inset: 0 0 auto;
-  z-index: calc(var(--z-toast) + 1);
-  height: 3px;
+  inset: 0;
+  z-index: var(--z-loader);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--loader-overlay);
+  opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--motion-duration-fast) var(--motion-ease-standard);
+  transition: opacity var(--motion-duration) var(--motion-ease-standard),
+    visibility var(--motion-duration) var(--motion-ease-standard);
 }
 
-.route-progress.is-active {
+.route-loader.is-active {
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
-.route-progress-bar {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--primary-dark),
-    var(--primary) 55%,
-    #a78bfa
-  );
-  box-shadow: 0 0 12px rgba(124, 58, 237, 0.45);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 1.15s var(--motion-ease-standard);
-}
-
-.route-progress.is-active .route-progress-bar {
-  transform: scaleX(0.78);
-}
-
-.route-progress.is-complete .route-progress-bar {
-  transform: scaleX(1);
-  transition-duration: var(--motion-duration-fast);
-  transition-timing-function: var(--motion-ease-exit);
-}
-
-.route-progress.is-leaving {
+.route-loader.is-leaving {
   opacity: 0;
+  pointer-events: none;
 }
 
-.route-progress.is-resetting .route-progress-bar {
-  transform: scaleX(0);
-  transition: none;
+.route-loader-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  padding: 22px 26px;
+  background: var(--surface-translucent);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-float);
+  text-align: center;
+}
+
+.route-loader-media {
+  width: clamp(96px, 26vw, 120px);
+  height: auto;
+}
+
+.route-loader p {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+html.is-route-loading,
+html.is-route-loading body {
+  overflow: hidden;
+}
+
+/* Tombol kembali ke atas dengan scroll halus. */
+.scroll-top {
+  position: fixed;
+  right: 24px;
+  bottom: 96px;
+  z-index: var(--z-header);
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: var(--primary-dark);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  box-shadow: var(--shadow-card-hover);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px) scale(0.96);
+  transition: opacity var(--transition), transform var(--transition),
+    visibility var(--transition), background var(--transition),
+    border-color var(--transition);
+}
+
+.scroll-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.scroll-top:hover {
+  background: var(--primary-soft);
+  border-color: var(--lavender);
+}
+
+.scroll-top svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 767px) {
+  .scroll-top {
+    right: 14px;
+    bottom: calc(
+      var(--bottom-nav-height) + 20px + env(safe-area-inset-bottom)
+    );
+    width: 40px;
+    height: 40px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .route-progress {
-    display: none;
+  .route-loader,
+  .scroll-top {
+    transition: none;
   }
 }
 
@@ -151,10 +208,8 @@ html.page-exiting .bottom-nav {
   flex-direction: column;
   width: var(--sidebar-width);
   padding: 26px 18px 18px;
-  background: rgba(255, 255, 255, 0.78);
-  border-right: 1px solid rgba(236, 232, 243, 0.9);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
 }
 
 .sidebar-nav {
@@ -214,15 +269,17 @@ html.page-exiting .bottom-nav {
   gap: 10px;
   padding: 6px 14px 6px 6px;
   background: var(--glass);
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-card);
   transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.header-profile:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card-hover);
+@media (hover: hover) and (pointer: fine) {
+  .header-profile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+  }
 }
 
 .header-profile-meta {
@@ -259,7 +316,7 @@ html.page-exiting .bottom-nav {
   inset: 0;
   width: 100%;
   height: 100%;
-  background: rgba(30, 20, 50, 0.38);
+  background: var(--overlay);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   opacity: 0;
@@ -282,11 +339,11 @@ html.page-exiting .bottom-nav {
   box-shadow: var(--shadow-float);
   transform: translateY(100%);
   transition: transform var(--motion-duration) var(--motion-ease-emphasized);
-  will-change: transform;
 }
 
 .mobile-sheet.is-open .mobile-sheet-panel {
   transform: translateY(0);
+  will-change: transform;
 }
 
 .sheet-link {
@@ -351,11 +408,9 @@ body.sheet-open {
   padding: 48px 34px;
   text-align: center;
   background: var(--glass);
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 .index-logo {
@@ -442,7 +497,7 @@ body.sheet-open {
   gap: 32px;
   overflow: hidden;
   padding: 44px clamp(32px, 6vw, 76px) 32px;
-  color: #fff;
+  color: var(--on-primary);
   background:
     radial-gradient(circle at 82% 12%, rgba(196, 181, 253, 0.38), transparent 32%),
     radial-gradient(circle at 12% 92%, rgba(167, 139, 250, 0.3), transparent 38%),

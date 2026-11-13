@@ -13,13 +13,14 @@ Dibangun tanpa framework frontend: HTML5, CSS3, dan vanilla JavaScript (ES Modul
 - **Utang**: tambah, lihat detail, edit, hapus, catat pembayaran, filter, dan pencarian.
 - **Piutang**: tambah, lihat detail, edit, hapus, catat pengembalian, filter, dan pencarian.
 - **Profil orang**: ketuk nama pada daftar utang/piutang untuk membuka profil berisi foto, seluruh catatan orang tersebut, ringkasan pokok, serta riwayat penambahan pokok.
-- **Foto profil**: pilih foto dari galeri; aplikasi memotong dan mengecilkannya menjadi avatar 512×512 JPEG yang disimpan lokal di perangkat.
+- **Foto profil**: pilih foto dari galeri untuk profil Anda atau profil orang pada utang/piutang; aplikasi memotong dan mengecilkannya menjadi avatar 512×512 JPEG yang disimpan lokal di perangkat, dan foto profil Anda tampil di sidebar serta header dashboard.
 - **Penambahan pokok**: tambah nominal ke catatan utang/piutang yang sudah ada. Total pokok diperbarui, status dihitung ulang, dan setiap penambahan dicatat sebagai riwayat tersendiri.
 - **Tabungan**: buat target, setor, tarik, edit, hapus, progres target, dan riwayat transaksi per target.
 - **Riwayat**: filter kategori dan tanggal, pencarian, sorting, dan pagination. Riwayat dibentuk otomatis dari data dompet, utang, piutang, penambahan pokok, dan tabungan.
-- **Pengaturan**: ubah nama profil yang dipakai pada sapaan dashboard dan sidebar.
-- **Android**: status bar native, tombol kembali, dan splash screen.
-- **Transisi halus**: View Transitions antar halaman, animasi modal, toast, sheet, kartu, navigasi, dan tombol yang menghormati `prefers-reduced-motion`.
+- **Pengaturan**: ubah nama dan foto profil, serta pilih tema **Terang**, **Gelap**, atau **Sistem**. Preferensi tema tersimpan di perangkat.
+- **Android**: status bar native yang menyesuaikan tema, tombol kembali, dan splash screen.
+- **Transisi halus**: overlay loading GIF di tengah layar saat berpindah halaman, View Transitions, animasi modal, toast, sheet, kartu, navigasi, dan tombol yang menghormati `prefers-reduced-motion`.
+- **Gulir nyaman**: momentum native di ponsel, `scroll-behavior: smooth`, dan tombol **Kembali ke atas** yang muncul setelah halaman digulir.
 - **Responsif** untuk desktop, tablet, dan ponsel.
 
 Pembayaran utang, pengembalian piutang, penambahan pokok, setoran/penarikan tabungan, transaksi dompet, serta transfer antar dompet ditulis dalam satu transaksi IndexedDB. Saldo dan status tidak pernah tersimpan setengah jalan, dan nominal tidak dapat melebihi sisa atau saldo yang tersedia. Penambahan pokok pada catatan yang sudah lunas akan mengaktifkan kembali catatan tersebut.
@@ -144,11 +145,11 @@ Workflow `.github/workflows/android-release.yml` berjalan saat tag `v*` dibuat a
 Contoh merilis versi baru:
 
 ```bash
-git tag v2.3.0
-git push origin v2.3.0
+git tag v2.4.0
+git push origin v2.4.0
 ```
 
-Versi aplikasi Android saat ini adalah `versionCode 5` / `versionName "2.3"`.
+Versi aplikasi Android saat ini adalah `versionCode 6` / `versionName "2.4"`.
 
 ## Pemasangan APK
 

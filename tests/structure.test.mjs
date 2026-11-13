@@ -43,6 +43,11 @@ const REQUIRED_FILES = [
   'assets/js/components/layout.js',
   'assets/js/components/summary.js',
   'assets/js/components/charts.js',
+  'assets/js/components/scroll-top.js',
+  'assets/js/theme.js',
+  'assets/js/theme-init.js',
+  'assets/images/loading.gif',
+  'assets/images/loading-static.png',
   'assets/js/services/profile.service.js',
   'assets/js/services/contact.service.js',
   'assets/js/services/dashboard.service.js',
@@ -180,6 +185,14 @@ test('halaman aplikasi memuat aset dan struktur layout yang benar', async () => 
     assert.match(html, /<html lang="id">/, `${file}: atribut bahasa`);
     assert.doesNotMatch(html, /type="importmap"/, `${file}: import map`);
     assert.doesNotMatch(html, /supabase/i, `${file}: referensi Supabase`);
+
+    const themeInitIndex = html.indexOf('theme-init.js');
+    const firstStylesheetIndex = html.indexOf('<link rel="stylesheet"');
+
+    assert.ok(
+      themeInitIndex > -1 && themeInitIndex < firstStylesheetIndex,
+      `${file}: theme-init harus dimuat sebelum CSS`
+    );
 
     const localRefs = [...html.matchAll(/(?:href|src)="([^"]+)"/g)]
       .map((match) => match[1])
@@ -406,19 +419,111 @@ test('halaman dompet, navigasi, dan sistem motion terhubung', async () => {
   assert.match(variables, /--motion-ease-emphasized/);
   assert.match(layoutCss, /@view-transition/);
   assert.match(layoutCss, /content-reveal/);
-  assert.match(layoutCss, /\.route-progress\s*\{/);
-  assert.match(layoutCss, /route-progress-bar/);
+  assert.match(layoutCss, /\.route-loader\s*\{/);
+  assert.match(layoutCss, /\.route-loader-media/);
+  assert.match(layoutCss, /\.scroll-top\s*\{/);
   assert.match(layoutCss, /prefers-reduced-motion:\s*reduce/);
   assert.match(motion, /initRouteProgress/);
   assert.match(motion, /startRouteProgress/);
   assert.match(motion, /finishRouteProgress/);
-  assert.match(motion, /route-progress/);
+  assert.match(motion, /loading\.gif/);
+  assert.match(motion, /loading-static\.png/);
+  assert.match(motion, /LOADER_TIMEOUT/);
   assert.match(app, /startRouteProgress/);
   assert.match(app, /finishRouteProgress/);
   assert.match(components, /prefers-reduced-motion:\s*reduce/);
   assert.match(modal, /is-closing/);
-  assert.match(gradle, /versionCode 5/);
-  assert.match(gradle, /versionName "2\.3"/);
+  assert.match(gradle, /versionCode 6/);
+  assert.match(gradle, /versionName "2\.4"/);
+});
+
+test('tema gelap, foto profil, dan kontrol gulir terhubung', async () => {
+  const variables = await readFile(
+    path.join(root, 'assets/css/variables.css'),
+    'utf8'
+  );
+  const layoutCss = await readFile(
+    path.join(root, 'assets/css/layout.css'),
+    'utf8'
+  );
+  const components = await readFile(
+    path.join(root, 'assets/css/components.css'),
+    'utf8'
+  );
+  const pagesCss = await readFile(
+    path.join(root, 'assets/css/pages.css'),
+    'utf8'
+  );
+  const theme = await readFile(
+    path.join(root, 'assets/js/theme.js'),
+    'utf8'
+  );
+  const themeInit = await readFile(
+    path.join(root, 'assets/js/theme-init.js'),
+    'utf8'
+  );
+  const layout = await readFile(
+    path.join(root, 'assets/js/components/layout.js'),
+    'utf8'
+  );
+  const scrollTop = await readFile(
+    path.join(root, 'assets/js/components/scroll-top.js'),
+    'utf8'
+  );
+  const charts = await readFile(
+    path.join(root, 'assets/js/components/charts.js'),
+    'utf8'
+  );
+  const settings = await readFile(
+    path.join(root, 'assets/js/settings.js'),
+    'utf8'
+  );
+  const settingsHtml = await readFile(
+    path.join(root, 'pages/settings.html'),
+    'utf8'
+  );
+  const native = await readFile(
+    path.join(root, 'assets/js/native.js'),
+    'utf8'
+  );
+
+  assert.match(variables, /\[data-theme="dark"\]/);
+  assert.match(variables, /--loader-overlay/);
+  assert.match(variables, /--chart-line/);
+  assert.match(variables, /scroll-behavior:\s*smooth/);
+  assert.match(layoutCss, /html\.is-route-loading/);
+  assert.match(layoutCss, /\.scroll-top\.is-visible/);
+  assert.match(components, /\.avatar img/);
+  assert.match(pagesCss, /\.theme-option\.is-active/);
+  assert.match(pagesCss, /\.profile-photo-actions/);
+
+  assert.match(theme, /finora-theme/);
+  assert.match(theme, /finora:themechange/);
+  assert.match(theme, /setThemePreference/);
+  assert.match(themeInit, /localStorage\.getItem/);
+  assert.match(themeInit, /prefers-color-scheme:\s*dark/);
+
+  assert.match(layout, /initScrollTop/);
+  assert.match(layout, /profile\?\.photo/);
+  assert.match(scrollTop, /scrollTo/);
+  assert.match(scrollTop, /prefers-reduced-motion/);
+
+  assert.match(charts, /--chart-text/);
+  assert.match(charts, /resizeDelay:\s*150/);
+  assert.match(charts, /devicePixelRatio:\s*Math\.min/);
+  assert.match(charts, /finora:themechange/);
+
+  assert.match(settingsHtml, /data-theme-option="light"/);
+  assert.match(settingsHtml, /data-theme-option="dark"/);
+  assert.match(settingsHtml, /data-theme-option="system"/);
+  assert.match(settingsHtml, /id="profile-photo-input"/);
+  assert.match(settings, /updateProfilePhoto/);
+  assert.match(settings, /fileToAvatarDataUrl/);
+  assert.match(settings, /confirmDialog/);
+  assert.match(settings, /setThemePreference/);
+
+  assert.match(native, /Style\.Dark/);
+  assert.match(native, /onThemeChange/);
 });
 
 test('tidak ada placeholder atau fungsi transaksi palsu di frontend', async () => {
@@ -453,7 +558,7 @@ test('package.json menyediakan perintah pengujian lokal', async () => {
     await readFile(path.join(root, 'package.json'), 'utf8')
   );
 
-  assert.equal(pkg.version, '2.3.0');
+  assert.equal(pkg.version, '2.4.0');
   assert.match(pkg.scripts.test, /test:storage/);
   assert.match(pkg.scripts.test, /test:utils/);
   assert.match(pkg.scripts.test, /test:structure/);

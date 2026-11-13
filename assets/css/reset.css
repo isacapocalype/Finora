@@ -12,6 +12,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: contain;
 }
 
 body {
@@ -22,7 +23,8 @@ body {
   color: var(--text-primary);
   background-color: var(--background);
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: contain;
+  -webkit-tap-highlight-color: transparent;
 }
 
 img,
