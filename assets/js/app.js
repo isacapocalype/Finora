@@ -1,7 +1,11 @@
 import { LOCAL_USER } from './local.js';
 import { getOrCreateProfile } from './services/profile.service.js';
 import { renderLayout } from './components/layout.js';
-import { initPageTransitions } from './components/motion.js';
+import {
+  initPageTransitions,
+  startRouteProgress,
+  finishRouteProgress
+} from './components/motion.js';
 import { icon, refreshIcons } from './icons.js';
 import { escapeHtml, getErrorMessage } from './utils.js';
 import { initNativeShell } from './native.js';
@@ -20,6 +24,7 @@ const page = document.body.dataset.page;
 
 bootstrap().catch((error) => {
   console.error('Failed to initialize Finora:', error);
+  finishRouteProgress({ immediate: true });
 
   renderFatalError({
     title: 'Aplikasi gagal dimuat',
@@ -43,6 +48,7 @@ async function bootstrap() {
   }
 
   initPageTransitions();
+  startRouteProgress();
 
   let profile;
 
@@ -50,6 +56,7 @@ async function bootstrap() {
     profile = await getOrCreateProfile(LOCAL_USER);
   } catch (error) {
     console.error('Failed to load local profile:', error);
+    finishRouteProgress({ immediate: true });
 
     renderFatalError({
       title: 'Penyimpanan lokal tidak dapat diakses',
@@ -99,6 +106,8 @@ async function bootstrap() {
       });
       refreshIcons();
     }
+  } finally {
+    finishRouteProgress();
   }
 }
 

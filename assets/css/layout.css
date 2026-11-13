@@ -80,6 +80,62 @@ html.page-exiting .bottom-nav {
     transform var(--motion-duration-fast) var(--motion-ease-exit);
 }
 
+/* Indikator loading di atas layar saat berpindah halaman. */
+.route-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: calc(var(--z-toast) + 1);
+  height: 3px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.route-progress.is-active {
+  opacity: 1;
+}
+
+.route-progress-bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--primary-dark),
+    var(--primary) 55%,
+    #a78bfa
+  );
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.45);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1.15s var(--motion-ease-standard);
+}
+
+.route-progress.is-active .route-progress-bar {
+  transform: scaleX(0.78);
+}
+
+.route-progress.is-complete .route-progress-bar {
+  transform: scaleX(1);
+  transition-duration: var(--motion-duration-fast);
+  transition-timing-function: var(--motion-ease-exit);
+}
+
+.route-progress.is-leaving {
+  opacity: 0;
+}
+
+.route-progress.is-resetting .route-progress-bar {
+  transform: scaleX(0);
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-progress {
+    display: none;
+  }
+}
+
 /* =========================================================
    APP SHELL
    ========================================================= */

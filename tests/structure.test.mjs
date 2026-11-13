@@ -362,6 +362,10 @@ test('halaman dompet, navigasi, dan sistem motion terhubung', async () => {
     'utf8'
   );
   const app = await readFile(path.join(root, 'assets/js/app.js'), 'utf8');
+  const motion = await readFile(
+    path.join(root, 'assets/js/components/motion.js'),
+    'utf8'
+  );
   const history = await readFile(
     path.join(root, 'pages/history.html'),
     'utf8'
@@ -402,6 +406,15 @@ test('halaman dompet, navigasi, dan sistem motion terhubung', async () => {
   assert.match(variables, /--motion-ease-emphasized/);
   assert.match(layoutCss, /@view-transition/);
   assert.match(layoutCss, /content-reveal/);
+  assert.match(layoutCss, /\.route-progress\s*\{/);
+  assert.match(layoutCss, /route-progress-bar/);
+  assert.match(layoutCss, /prefers-reduced-motion:\s*reduce/);
+  assert.match(motion, /initRouteProgress/);
+  assert.match(motion, /startRouteProgress/);
+  assert.match(motion, /finishRouteProgress/);
+  assert.match(motion, /route-progress/);
+  assert.match(app, /startRouteProgress/);
+  assert.match(app, /finishRouteProgress/);
   assert.match(components, /prefers-reduced-motion:\s*reduce/);
   assert.match(modal, /is-closing/);
   assert.match(gradle, /versionCode 4/);
