@@ -43,6 +43,12 @@ const HISTORY_CATEGORY_META = {
     badgeClass: 'badge badge-purple',
     amountClass: 'amount-inflow'
   },
+  debt_addition: {
+    label: 'Penambahan utang',
+    icon: 'plus-circle',
+    badgeClass: 'badge badge-purple',
+    amountClass: 'amount-inflow'
+  },
   debt_payment: {
     label: 'Pembayaran utang',
     icon: 'hand-coins',
@@ -52,6 +58,12 @@ const HISTORY_CATEGORY_META = {
   receivable_created: {
     label: 'Piutang baru',
     icon: 'arrow-up-right',
+    badgeClass: 'badge badge-info',
+    amountClass: 'amount-outflow'
+  },
+  receivable_addition: {
+    label: 'Penambahan piutang',
+    icon: 'plus-circle',
     badgeClass: 'badge badge-info',
     amountClass: 'amount-outflow'
   },
@@ -76,8 +88,12 @@ const HISTORY_CATEGORY_META = {
 };
 
 export const HISTORY_GROUPS = {
-  debts: ['debt_created', 'debt_payment'],
-  receivables: ['receivable_created', 'receivable_payment'],
+  debts: ['debt_created', 'debt_addition', 'debt_payment'],
+  receivables: [
+    'receivable_created',
+    'receivable_addition',
+    'receivable_payment'
+  ],
   savings: ['savings_deposit', 'savings_withdrawal']
 };
 
@@ -211,6 +227,13 @@ export function getHistoryGroup(category) {
   }
 
   return 'all';
+}
+
+export function normalizeNameKey(name) {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
 }
 
 export function parseNumber(value) {

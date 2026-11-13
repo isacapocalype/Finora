@@ -583,6 +583,23 @@
     border: 0;
     overflow: visible;
   }
+
+  .table-stack .cell-person-button {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .table-stack .cell-person-arrow {
+    display: none;
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .contact-hero {
+    align-items: flex-start;
+  }
 }
 
 /* =========================================================
@@ -633,6 +650,30 @@
 
   .modal-footer .btn {
     width: 100%;
+  }
+
+  .contact-hero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .contact-photo-actions {
+    justify-content: center;
+  }
+
+  .profile-record-head {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .profile-record-actions .btn {
+    flex: 1 1 40%;
+  }
+
+  .principal-target,
+  .principal-preview {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .history-item {

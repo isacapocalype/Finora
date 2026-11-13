@@ -11,10 +11,12 @@ const receivableService = await import(
   '../assets/js/services/receivable.service.js'
 );
 const savingsService = await import('../assets/js/services/savings.service.js');
+const contactService = await import('../assets/js/services/contact.service.js');
 const historyService = await import('../assets/js/services/history.service.js');
 const dashboardService = await import(
   '../assets/js/services/dashboard.service.js'
 );
+const { validateImageFile } = await import('../assets/js/photo.js');
 
 beforeEach(async () => {
   await db.clearAllData();
@@ -141,6 +143,348 @@ test('utang: buat, bayar, validasi sisa, dan hapus beserta riwayat', async () =>
   assert.equal(
     (await historyService.listHistory({ userId: LOCAL_USER_ID })).count,
     0
+  );
+});
+
+test('kontak menyatukan orang yang sama dan menyimpan foto profil', async () => {
+  const debt = await debtService.createDebt(LOCAL_USER_ID, {
+    lenderName: '  Budi   Santoso ',
+    amount: 100000,
+    transactionDate: '2026-01-01'
+  });
+  const receivable = await receivableService.createReceivable(LOCAL_USER_ID, {
+    borrowerName: 'budi santoso',
+    amount: 50000,
+    transactionDate: '2026-01-02'
+  });
+
+  assert.equal(debt.contact_id, receivable.contact_id);
+
+  const contacts = await contactService.listContacts(LOCAL_USER_ID);
+  assert.equal(contacts.length, 1);
+  assert.equal(contacts[0].name, 'Budi Santoso');
+  assert.equal(contacts[0].name_key, 'budi santoso');
+
+  const photo = 'data:image/jpeg;base64,Zm90by11dGFtYQ==';
+  const withPhoto = await contactService.setContactPhoto(
+    LOCAL_USER_ID,
+    debt.contact_id,
+    photo
+  );
+  assert.equal(withPhoto.photo, photo);
+  assert.equal(
+    (await contactService.getContact(LOCAL_USER_ID, debt.contact_id)).photo,
+    photo
+  );
+
+  const withoutPhoto = await contactService.removeContactPhoto(
+    LOCAL_USER_ID,
+    debt.contact_id
+  );
+  assert.equal(withoutPhoto.photo, '');
+
+  const renamed = await contactService.updateContactName(
+    LOCAL_USER_ID,
+    debt.contact_id,
+    'Budi S.'
+  );
+  assert.equal(renamed.name, 'Budi S.');
+  assert.equal(renamed.name_key, 'budi s.');
+
+  const second = await contactService.resolveContact(LOCAL_USER_ID, {
+    name: 'Siti'
+  });
+
+  await assert.rejects(
+    contactService.updateContactName(
+      LOCAL_USER_ID,
+      second.id,
+      'budi s.'
+    ),
+    /sudah dipakai kontak lain/
+  );
+});
+
+test('utang: penambahan pokok memperbarui total dan mengaktifkan kembali', async () => {
+  const created = await debtService.createDebt(LOCAL_USER_ID, {
+    lenderName: 'Budi',
+    amount: 100000,
+    transactionDate: '2026-01-01'
+  });
+
+  await debtService.recordDebtPayment({
+    userId: LOCAL_USER_ID,
+    debtId: created.id,
+    amount: 100000,
+    paymentDate: '2026-01-10'
+  });
+
+  let debt = (await debtService.listDebts(LOCAL_USER_ID))[0];
+  assert.equal(debt.status, 'paid');
+
+  const addition = await debtService.addDebtPrincipal({
+    userId: LOCAL_USER_ID,
+    debtId: created.id,
+    amount: 50000,
+    additionDate: '2026-01-20',
+    description: 'Tambahan modal'
+  });
+
+  assert.equal(addition.amount, 50000);
+  assert.equal(addition.debt_id, created.id);
+
+  debt = (await debtService.listDebts(LOCAL_USER_ID))[0];
+  assert.equal(debt.initial_amount, 100000);
+  assert.equal(debt.amount, 150000);
+  assert.equal(debt.paid_amount, 100000);
+  assert.equal(debt.status, 'partial');
+  assert.equal(
+    (await debtService.listDebtAdditions(LOCAL_USER_ID, created.id)).length,
+    1
+  );
+
+  await debtService.addDebtPrincipal({
+    userId: LOCAL_USER_ID,
+    debtId: created.id,
+    amount: 25000,
+    additionDate: '2026-01-21'
+  });
+
+  const updated = await debtService.updateDebt(LOCAL_USER_ID, created.id, {
+    lenderName: 'Budi',
+    amount: 110000,
+    transactionDate: '2026-01-01'
+  });
+
+  assert.equal(updated.initial_amount, 110000);
+  assert.equal(updated.amount, 185000);
+  assert.equal(updated.status, 'partial');
+
+  const history = await historyService.listHistory({
+    userId: LOCAL_USER_ID,
+    group: 'debts'
+  });
+  assert.deepEqual(
+    history.rows.map((row) => row.category).sort(),
+    [
+      'debt_addition',
+      'debt_addition',
+      'debt_created',
+      'debt_payment'
+    ]
+  );
+
+  const dashboard = await dashboardService.loadDashboardData(LOCAL_USER_ID);
+  assert.equal(dashboard.recent[0].category, 'debt_addition');
+
+  await debtService.deleteDebt(LOCAL_USER_ID, created.id);
+
+  assert.deepEqual(
+    await debtService.listAllDebtAdditions(LOCAL_USER_ID),
+    []
+  );
+  assert.equal(
+    (
+      await historyService.listHistory({
+        userId: LOCAL_USER_ID,
+        group: 'debts'
+      })
+    ).count,
+    0
+  );
+});
+
+test('piutang: penambahan pokok tercatat di riwayat dan dapat dihapus', async () => {
+  const created = await receivableService.createReceivable(LOCAL_USER_ID, {
+    borrowerName: 'Siti',
+    amount: 80000,
+    transactionDate: '2026-02-01'
+  });
+
+  await receivableService.recordReceivablePayment({
+    userId: LOCAL_USER_ID,
+    receivableId: created.id,
+    amount: 30000,
+    paymentDate: '2026-02-05'
+  });
+
+  await receivableService.addReceivablePrincipal({
+    userId: LOCAL_USER_ID,
+    receivableId: created.id,
+    amount: 20000,
+    additionDate: '2026-02-10',
+    description: 'Pinjaman tambahan'
+  });
+
+  const receivable = (
+    await receivableService.listReceivables(LOCAL_USER_ID)
+  )[0];
+
+  assert.equal(receivable.initial_amount, 80000);
+  assert.equal(receivable.amount, 100000);
+  assert.equal(receivable.received_amount, 30000);
+  assert.equal(receivable.status, 'partial');
+  assert.equal(
+    (
+      await receivableService.listReceivableAdditions(
+        LOCAL_USER_ID,
+        created.id
+      )
+    ).length,
+    1
+  );
+
+  const history = await historyService.listHistory({
+    userId: LOCAL_USER_ID,
+    group: 'receivables'
+  });
+  assert.deepEqual(
+    history.rows.map((row) => row.category).sort(),
+    ['receivable_addition', 'receivable_created', 'receivable_payment']
+  );
+
+  await receivableService.deleteReceivable(LOCAL_USER_ID, created.id);
+  assert.deepEqual(
+    await receivableService.listAllReceivableAdditions(LOCAL_USER_ID),
+    []
+  );
+});
+
+test('migrasi v1 ke v2 membuat kontak bersama dan nominal awal', async () => {
+  const databaseName = 'finora-migration-test';
+
+  await new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(databaseName);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error('Database test masih terbuka.'));
+  });
+
+  await new Promise((resolve, reject) => {
+    const request = indexedDB.open(databaseName, 1);
+
+    request.onupgradeneeded = () => {
+      const database = request.result;
+
+      database.createObjectStore('debts', { keyPath: 'id' });
+      database.createObjectStore('receivables', { keyPath: 'id' });
+    };
+
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction(
+        ['debts', 'receivables'],
+        'readwrite'
+      );
+
+      transaction.objectStore('debts').put({
+        id: 'debt-legacy',
+        user_id: LOCAL_USER_ID,
+        lender_name: 'Budi Santoso',
+        amount: 100000,
+        paid_amount: 0,
+        transaction_date: '2026-01-01',
+        status: 'unpaid',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z'
+      });
+      transaction.objectStore('receivables').put({
+        id: 'receivable-legacy',
+        user_id: LOCAL_USER_ID,
+        borrower_name: 'budi   santoso',
+        amount: 50000,
+        received_amount: 0,
+        transaction_date: '2026-01-02',
+        status: 'unpaid',
+        created_at: '2026-01-02T00:00:00.000Z',
+        updated_at: '2026-01-02T00:00:00.000Z'
+      });
+      transaction.oncomplete = () => {
+        database.close();
+        resolve();
+      };
+      transaction.onerror = () => reject(transaction.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+
+  const result = await new Promise((resolve, reject) => {
+    const request = indexedDB.open(databaseName, 2);
+
+    request.onupgradeneeded = () => {
+      const database = request.result;
+
+      for (const store of [
+        'contacts',
+        'debts',
+        'receivables',
+        'debt_additions',
+        'receivable_additions'
+      ]) {
+        if (!database.objectStoreNames.contains(store)) {
+          database.createObjectStore(store, { keyPath: 'id' });
+        }
+      }
+
+      db.migrateLegacyRows(database, request.transaction);
+    };
+
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction(
+        ['contacts', 'debts', 'receivables'],
+        'readonly'
+      );
+      const contactsRequest = transaction.objectStore('contacts').getAll();
+      const debtsRequest = transaction.objectStore('debts').getAll();
+      const receivablesRequest = transaction
+        .objectStore('receivables')
+        .getAll();
+
+      transaction.oncomplete = () => {
+        database.close();
+        resolve({
+          contacts: contactsRequest.result,
+          debts: debtsRequest.result,
+          receivables: receivablesRequest.result
+        });
+      };
+      transaction.onerror = () => reject(transaction.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+
+  assert.equal(result.contacts.length, 1);
+  assert.equal(result.contacts[0].name, 'Budi Santoso');
+  assert.equal(result.debts[0].contact_id, result.contacts[0].id);
+  assert.equal(result.receivables[0].contact_id, result.contacts[0].id);
+  assert.equal(result.debts[0].initial_amount, 100000);
+  assert.equal(result.receivables[0].initial_amount, 50000);
+});
+
+test('validasi foto menolak berkas yang bukan gambar atau terlalu besar', () => {
+  assert.equal(validateImageFile(null).valid, false);
+  assert.equal(
+    validateImageFile({ name: 'catatan.txt', type: 'text/plain', size: 10 })
+      .valid,
+    false
+  );
+  assert.equal(
+    validateImageFile({
+      name: 'besar.jpg',
+      type: 'image/jpeg',
+      size: 13 * 1024 * 1024
+    }).valid,
+    false
+  );
+  assert.equal(
+    validateImageFile({
+      name: 'wajah.jpg',
+      type: 'image/jpeg',
+      size: 1024
+    }).valid,
+    true
   );
 });
 

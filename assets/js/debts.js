@@ -1,8 +1,11 @@
 import { createLedgerPage } from './components/ledger.js';
 import {
+  addDebtPrincipal,
   computeDebtSummary,
   createDebt,
   deleteDebt,
+  listAllDebtPayments,
+  listDebtAdditions,
   listDebtPayments,
   listDebts,
   recordDebtPayment,
@@ -29,6 +32,7 @@ const ledger = createLedgerPage({
     personLabel: 'Nama pemberi pinjaman',
     personPlaceholder: 'Contoh: Budi Santoso',
     amountLabel: 'Nominal utang',
+    initialAmountLabel: 'Nominal awal utang',
     paidLabel: 'Sudah dibayar',
     remainingLabel: 'Sisa utang',
     dateLabel: 'Tanggal utang',
@@ -38,8 +42,26 @@ const ledger = createLedgerPage({
     paymentTitle: 'Catat Pembayaran Utang',
     paymentDescription:
       'Pembayaran disimpan secara atomik di perangkat dan tidak dapat melebihi sisa utang.',
+    principalAction: 'Tambah Pokok',
+    principalTitle: 'Tambah Pokok Utang',
+    principalNoun: 'pokok utang',
+    principalDescription:
+      'Nominal pokok akan ditambahkan ke catatan yang dipilih dan disimpan sebagai riwayat penambahan.',
+    profileTitle: 'Profil Pemberi Pinjaman',
+    profileAddAction: 'Catat Utang Baru',
+    profileDescription:
+      'Semua utang dan penambahan pokok untuk orang ini dikumpulkan dalam satu profil.',
+    profileHistoryTitle: 'Riwayat Utang',
+    profileAdditionTitle: 'Riwayat Penambahan Pokok',
+    profileAdditionEmpty:
+      'Belum ada penambahan pokok. Tambahkan pokok dari salah satu catatan di atas.',
+    photoAction: 'Ubah Foto',
+    photoRemoveAction: 'Hapus Foto',
+    photoEmpty: 'Belum ada foto profil',
     historyTitle: 'Riwayat Pembayaran',
     historyEmpty: 'Belum ada pembayaran untuk utang ini.',
+    additionHistoryTitle: 'Riwayat Penambahan Pokok',
+    additionHistoryEmpty: 'Belum ada penambahan pokok untuk utang ini.',
     emptyTitle: 'Belum ada utang',
     emptyDescription:
       'Catat utang pertamamu untuk mulai memantau sisa kewajiban dan jatuh tempo.',
@@ -54,6 +76,16 @@ const ledger = createLedgerPage({
     update: updateDebt,
     remove: deleteDebt,
     listPayments: listDebtPayments,
+    listAllPayments: listAllDebtPayments,
+    listAdditions: listDebtAdditions,
+    addPrincipal: (userId, debtId, payload) =>
+      addDebtPrincipal({
+        userId,
+        debtId,
+        amount: payload.amount,
+        additionDate: payload.additionDate,
+        description: payload.description
+      }),
     recordPayment: (userId, debtId, payload) =>
       recordDebtPayment({
         userId,
@@ -71,7 +103,10 @@ const ledger = createLedgerPage({
   },
   toForm: (record) => ({
     person: record.lender_name,
-    amount: record.amount,
+    amount:
+      record.initial_amount === undefined
+        ? record.amount
+        : record.initial_amount,
     transactionDate: record.transaction_date,
     dueDate: record.due_date || '',
     description: record.description || ''

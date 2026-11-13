@@ -1,14 +1,20 @@
 // FINORA — LOCAL DATABASE (IndexedDB)
 // Seluruh data aplikasi disimpan di perangkat pengguna.
 
+import { createId } from './id.js';
+import { normalizeNameKey } from '../utils.js';
+
 const DB_NAME = 'finora-local';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const OBJECT_STORES = [
   'profiles',
+  'contacts',
   'debts',
+  'debt_additions',
   'debt_payments',
   'receivables',
+  'receivable_additions',
   'receivable_payments',
   'savings',
   'savings_transactions'
@@ -16,18 +22,100 @@ const OBJECT_STORES = [
 
 let dbPromise = null;
 
+function migrationContactId(contactStore, cache, userId, name, createdAt, now) {
+  const safeName = String(name || '').trim() || 'Tanpa Nama';
+  const nameKey = normalizeNameKey(safeName) || 'tanpa-nama';
+  const cacheKey = `${userId}|${nameKey}`;
+
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey);
+  }
+
+  const id = createId();
+
+  contactStore.put({
+    id,
+    user_id: userId,
+    name: safeName.slice(0, 120),
+    name_key: nameKey,
+    photo: null,
+    created_at: createdAt || now,
+    updated_at: now
+  });
+  cache.set(cacheKey, id);
+
+  return id;
+}
+
+// Data versi 1 belum mengenal kontak dan nominal awal. Saat upgrade, setiap
+// nama unik dibuatkan satu kontak agar profil, foto, dan riwayat penambahan
+// dapat dipakai tanpa kehilangan catatan lama.
+export function migrateLegacyRows(database, transaction) {
+  if (!database.objectStoreNames.contains('contacts')) {
+    return;
+  }
+
+  const contactStore = transaction.objectStore('contacts');
+  const cache = new Map();
+  const now = new Date().toISOString();
+
+  const migrateStore = (table, nameField) => {
+    if (!database.objectStoreNames.contains(table)) {
+      return;
+    }
+
+    const request = transaction.objectStore(table).openCursor();
+
+    request.onsuccess = () => {
+      const cursor = request.result;
+
+      if (!cursor) {
+        return;
+      }
+
+      const row = cursor.value;
+      const contactId = migrationContactId(
+        contactStore,
+        cache,
+        row.user_id,
+        row[nameField],
+        row.created_at,
+        now
+      );
+
+      cursor.update({
+        ...row,
+        contact_id: contactId,
+        initial_amount:
+          row.initial_amount === undefined
+            ? Number(row.amount) || 0
+            : Number(row.initial_amount),
+        updated_at: row.updated_at || now
+      });
+      cursor.continue();
+    };
+  };
+
+  migrateStore('debts', 'lender_name');
+  migrateStore('receivables', 'borrower_name');
+}
+
 function openDb() {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onupgradeneeded = () => {
+      request.onupgradeneeded = (event) => {
         const database = request.result;
 
         for (const store of OBJECT_STORES) {
           if (!database.objectStoreNames.contains(store)) {
             database.createObjectStore(store, { keyPath: 'id' });
           }
+        }
+
+        if (event.oldVersion > 0 && event.oldVersion < 2) {
+          migrateLegacyRows(database, request.transaction);
         }
       };
 

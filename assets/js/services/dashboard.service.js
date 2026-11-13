@@ -169,23 +169,29 @@ export async function loadDashboardData(userId) {
   const ownerId = resolveUserId(userId);
   const [
     debts,
+    debtAdditions,
     debtPayments,
     receivables,
+    receivableAdditions,
     receivablePayments,
     savings,
     transactions
   ] = await Promise.all([
     readUserRows(ownerId, 'debts'),
+    readUserRows(ownerId, 'debt_additions'),
     readUserRows(ownerId, 'debt_payments'),
     readUserRows(ownerId, 'receivables'),
+    readUserRows(ownerId, 'receivable_additions'),
     readUserRows(ownerId, 'receivable_payments'),
     readUserRows(ownerId, 'savings'),
     readUserRows(ownerId, 'savings_transactions')
   ]);
   const recent = buildHistoryRows({
     debts,
+    debtAdditions,
     debtPayments,
     receivables,
+    receivableAdditions,
     receivablePayments,
     savings,
     savingsTransactions: transactions

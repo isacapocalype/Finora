@@ -1,12 +1,14 @@
 // FINORA — RECEIVABLE SERVICE (local)
-// Piutang dan pengembaliannya dibaca serta ditulis langsung dari IndexedDB.
+// Piutang, penambahan pokok, dan pengembaliannya disimpan di IndexedDB.
 
 import { createId } from '../storage/id.js';
 import { readUserRows, upsertRow, writeBatch } from '../storage/db.js';
 import { resolveUserId } from '../local.js';
+import { resolveContact } from './contact.service.js';
 import { calcRemaining, roundMoney } from '../utils.js';
 
 const TABLE = 'receivables';
+const ADDITIONS_TABLE = 'receivable_additions';
 const PAYMENTS_TABLE = 'receivable_payments';
 
 function sortReceivables(rows) {
@@ -14,6 +16,18 @@ function sortReceivables(rows) {
     (first, second) =>
       String(second.transaction_date || '').localeCompare(
         String(first.transaction_date || '')
+      ) ||
+      String(second.created_at || '').localeCompare(
+        String(first.created_at || '')
+      )
+  );
+}
+
+function sortAdditions(rows) {
+  return [...rows].sort(
+    (first, second) =>
+      String(second.addition_date || '').localeCompare(
+        String(first.addition_date || '')
       ) ||
       String(second.created_at || '').localeCompare(
         String(first.created_at || '')
@@ -33,18 +47,39 @@ function sortPayments(rows) {
   );
 }
 
+function statusFor(amount, received) {
+  if (received <= 0) {
+    return 'unpaid';
+  }
+
+  return received >= amount ? 'paid' : 'partial';
+}
+
+function initialAmountFor(row, additionsTotal) {
+  return row.initial_amount === undefined
+    ? roundMoney(Number(row.amount) - additionsTotal)
+    : roundMoney(row.initial_amount);
+}
+
 export async function listReceivables(userId) {
   return sortReceivables(await readUserRows(resolveUserId(userId), TABLE));
 }
 
 export async function createReceivable(userId, payload) {
   const ownerId = resolveUserId(userId);
+  const amount = roundMoney(payload.amount);
+  const contact = await resolveContact(ownerId, {
+    contactId: payload.contactId,
+    name: payload.borrowerName
+  });
   const now = new Date().toISOString();
   const row = {
     id: payload.id || createId(),
     user_id: ownerId,
-    borrower_name: payload.borrowerName,
-    amount: roundMoney(payload.amount),
+    contact_id: contact.id,
+    borrower_name: contact.name,
+    initial_amount: amount,
+    amount,
     received_amount: 0,
     transaction_date: payload.transactionDate,
     due_date: payload.dueDate || null,
@@ -61,7 +96,10 @@ export async function createReceivable(userId, payload) {
 
 export async function updateReceivable(userId, receivableId, payload) {
   const ownerId = resolveUserId(userId);
-  const receivables = await readUserRows(ownerId, TABLE);
+  const [receivables, additions] = await Promise.all([
+    readUserRows(ownerId, TABLE),
+    readUserRows(ownerId, ADDITIONS_TABLE)
+  ]);
   const current = receivables.find(
     (receivable) => receivable.id === receivableId
   );
@@ -70,24 +108,49 @@ export async function updateReceivable(userId, receivableId, payload) {
     throw new Error('Piutang tidak ditemukan.');
   }
 
-  const amount = roundMoney(payload.amount);
+  const receivableAdditions = additions.filter(
+    (addition) => addition.receivable_id === receivableId
+  );
+  const additionsTotal = receivableAdditions.reduce(
+    (total, addition) => total + Number(addition.amount || 0),
+    0
+  );
+  const currentInitial = initialAmountFor(current, additionsTotal);
+  const initialAmount = roundMoney(
+    payload.initialAmount === undefined
+      ? payload.amount === undefined
+        ? currentInitial
+        : payload.amount
+      : payload.initialAmount
+  );
+  const totalAmount = roundMoney(initialAmount + additionsTotal);
   const received = Number(current.received_amount) || 0;
 
-  if (amount < received) {
+  if (totalAmount < received) {
     throw new Error(
       'Nominal piutang tidak boleh lebih kecil dari total pengembalian.'
     );
   }
 
+  const contact = await resolveContact(ownerId, {
+    contactId: payload.contactId,
+    name: payload.borrowerName ?? current.borrower_name
+  });
+
   const updated = {
     ...current,
-    borrower_name: payload.borrowerName,
-    amount,
-    transaction_date: payload.transactionDate,
-    due_date: payload.dueDate || null,
-    description: payload.description || null,
-    status:
-      received <= 0 ? 'unpaid' : received >= amount ? 'paid' : 'partial',
+    contact_id: contact.id,
+    borrower_name: contact.name,
+    initial_amount: initialAmount,
+    amount: totalAmount,
+    transaction_date: payload.transactionDate ?? current.transaction_date,
+    due_date:
+      payload.dueDate === undefined ? current.due_date : payload.dueDate || null,
+    description:
+      payload.description === undefined
+        ? current.description
+        : payload.description || null,
+    status: statusFor(totalAmount, received),
     updated_at: new Date().toISOString()
   };
 
@@ -98,15 +161,25 @@ export async function updateReceivable(userId, receivableId, payload) {
 
 export async function deleteReceivable(userId, receivableId) {
   const ownerId = resolveUserId(userId);
-  const receivables = await readUserRows(ownerId, TABLE);
+  const [receivables, additions, payments] = await Promise.all([
+    readUserRows(ownerId, TABLE),
+    readUserRows(ownerId, ADDITIONS_TABLE),
+    readUserRows(ownerId, PAYMENTS_TABLE)
+  ]);
 
   if (!receivables.some((receivable) => receivable.id === receivableId)) {
     throw new Error('Piutang tidak ditemukan.');
   }
 
-  const payments = await readUserRows(ownerId, PAYMENTS_TABLE);
   const operations = [
     { table: TABLE, type: 'delete', key: receivableId },
+    ...additions
+      .filter((addition) => addition.receivable_id === receivableId)
+      .map((addition) => ({
+        table: ADDITIONS_TABLE,
+        type: 'delete',
+        key: addition.id
+      })),
     ...payments
       .filter((payment) => payment.receivable_id === receivableId)
       .map((payment) => ({
@@ -119,11 +192,82 @@ export async function deleteReceivable(userId, receivableId) {
   await writeBatch(operations);
 }
 
-export async function listReceivablePayments(userId, receivableId) {
-  const payments = await readUserRows(resolveUserId(userId), PAYMENTS_TABLE);
-  return sortPayments(
-    payments.filter((payment) => payment.receivable_id === receivableId)
+export async function listReceivableAdditions(userId, receivableId) {
+  const additions = await listAllReceivableAdditions(userId);
+  return additions.filter(
+    (addition) => addition.receivable_id === receivableId
   );
+}
+
+export async function listAllReceivableAdditions(userId) {
+  return sortAdditions(
+    await readUserRows(resolveUserId(userId), ADDITIONS_TABLE)
+  );
+}
+
+export async function listReceivablePayments(userId, receivableId) {
+  const payments = await listAllReceivablePayments(userId);
+  return payments.filter(
+    (payment) => payment.receivable_id === receivableId
+  );
+}
+
+export async function listAllReceivablePayments(userId) {
+  return sortPayments(
+    await readUserRows(resolveUserId(userId), PAYMENTS_TABLE)
+  );
+}
+
+export async function addReceivablePrincipal({
+  userId,
+  receivableId,
+  amount,
+  additionDate,
+  description,
+  clientAdditionId
+}) {
+  const ownerId = resolveUserId(userId);
+  const receivables = await readUserRows(ownerId, TABLE);
+  const receivable = receivables.find((item) => item.id === receivableId);
+
+  if (!receivable) {
+    throw new Error('Piutang tidak ditemukan.');
+  }
+
+  const additionAmount = roundMoney(amount);
+
+  if (!Number.isFinite(additionAmount) || additionAmount <= 0) {
+    throw new Error('Nominal penambahan harus lebih besar dari nol.');
+  }
+
+  const now = new Date().toISOString();
+  const nextAmount = roundMoney(Number(receivable.amount) + additionAmount);
+  const additionRow = {
+    id: clientAdditionId || createId(),
+    receivable_id: receivableId,
+    user_id: receivable.user_id,
+    amount: additionAmount,
+    addition_date: additionDate,
+    description: description || null,
+    created_at: now
+  };
+  const updatedReceivable = {
+    ...receivable,
+    initial_amount:
+      receivable.initial_amount === undefined
+        ? roundMoney(Number(receivable.amount))
+        : Number(receivable.initial_amount),
+    amount: nextAmount,
+    status: statusFor(nextAmount, Number(receivable.received_amount) || 0),
+    updated_at: now
+  };
+
+  await writeBatch([
+    { table: ADDITIONS_TABLE, value: additionRow },
+    { table: TABLE, value: updatedReceivable }
+  ]);
+
+  return additionRow;
 }
 
 export async function recordReceivablePayment({
@@ -176,8 +320,7 @@ export async function recordReceivablePayment({
   const updatedReceivable = {
     ...receivable,
     received_amount: nextReceived,
-    status:
-      nextReceived >= Number(receivable.amount) ? 'paid' : 'partial',
+    status: statusFor(Number(receivable.amount), nextReceived),
     updated_at: now
   };
 

@@ -22,6 +22,7 @@ const REQUIRED_FILES = [
   'assets/css/pages.css',
   'assets/css/responsive.css',
   'assets/js/local.js',
+  'assets/js/photo.js',
   'assets/js/storage/db.js',
   'assets/js/storage/id.js',
   'assets/js/app.js',
@@ -40,6 +41,7 @@ const REQUIRED_FILES = [
   'assets/js/components/summary.js',
   'assets/js/components/charts.js',
   'assets/js/services/profile.service.js',
+  'assets/js/services/contact.service.js',
   'assets/js/services/dashboard.service.js',
   'assets/js/services/debt.service.js',
   'assets/js/services/receivable.service.js',
@@ -85,9 +87,12 @@ const PAGE_MODULES = [
 
 const STORE_NAMES = [
   'profiles',
+  'contacts',
   'debts',
+  'debt_additions',
   'debt_payments',
   'receivables',
+  'receivable_additions',
   'receivable_payments',
   'savings',
   'savings_transactions'
@@ -303,6 +308,7 @@ test('penyimpanan lokal memakai IndexedDB dengan seluruh tabel aplikasi', async 
 
   for (const service of [
     'profile.service.js',
+    'contact.service.js',
     'debt.service.js',
     'receivable.service.js',
     'savings.service.js',
@@ -314,6 +320,30 @@ test('penyimpanan lokal memakai IndexedDB dengan seluruh tabel aplikasi', async 
       'utf8'
     );
     assert.match(source, /storage\/db\.js/, `${service}: storage lokal`);
+  }
+});
+
+test('halaman utang dan piutang memakai profil kontak dan penambahan pokok', async () => {
+  const ledger = await readFile(
+    path.join(root, 'assets/js/components/ledger.js'),
+    'utf8'
+  );
+
+  assert.match(ledger, /openContactProfile/);
+  assert.match(ledger, /openPrincipalForm/);
+  assert.match(ledger, /fileToAvatarDataUrl/);
+  assert.match(ledger, /profile-addition-history/);
+
+  for (const page of ['debts.js', 'receivables.js']) {
+    const source = await readFile(
+      path.join(root, 'assets/js', page),
+      'utf8'
+    );
+
+    assert.match(source, /addPrincipal/, `${page}: addPrincipal`);
+    assert.match(source, /listAdditions/, `${page}: listAdditions`);
+    assert.match(source, /profileTitle/, `${page}: profileTitle`);
+    assert.match(source, /principalAction/, `${page}: principalAction`);
   }
 });
 
@@ -349,7 +379,7 @@ test('package.json menyediakan perintah pengujian lokal', async () => {
     await readFile(path.join(root, 'package.json'), 'utf8')
   );
 
-  assert.equal(pkg.version, '2.0.0');
+  assert.equal(pkg.version, '2.1.0');
   assert.match(pkg.scripts.test, /test:storage/);
   assert.match(pkg.scripts.test, /test:utils/);
   assert.match(pkg.scripts.test, /test:structure/);

@@ -1,6 +1,6 @@
 {
   "name": "finora",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "description": "Finora — personal finance tracker with on-device storage, built with HTML, CSS, vanilla JavaScript, and Capacitor.",

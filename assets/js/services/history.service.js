@@ -38,8 +38,10 @@ function historyRow({
 
 export function buildHistoryRows({
   debts = [],
+  debtAdditions = [],
   debtPayments = [],
   receivables = [],
+  receivableAdditions = [],
   receivablePayments = [],
   savings = [],
   savingsTransactions = []
@@ -63,6 +65,28 @@ export function buildHistoryRows({
         direction: '+',
         transactionDate: debt.transaction_date,
         createdAt: debt.created_at
+      })
+    );
+  }
+
+  for (const addition of debtAdditions) {
+    const debt = debtMap.get(addition.debt_id);
+
+    if (!debt) {
+      continue;
+    }
+
+    rows.push(
+      historyRow({
+        id: addition.id,
+        userId: addition.user_id,
+        category: 'debt_addition',
+        title: `Penambahan utang kepada ${debt.lender_name}`,
+        description: addition.description,
+        amount: addition.amount,
+        direction: '+',
+        transactionDate: addition.addition_date,
+        createdAt: addition.created_at
       })
     );
   }
@@ -101,6 +125,28 @@ export function buildHistoryRows({
         direction: '-',
         transactionDate: receivable.transaction_date,
         createdAt: receivable.created_at
+      })
+    );
+  }
+
+  for (const addition of receivableAdditions) {
+    const receivable = receivableMap.get(addition.receivable_id);
+
+    if (!receivable) {
+      continue;
+    }
+
+    rows.push(
+      historyRow({
+        id: addition.id,
+        userId: addition.user_id,
+        category: 'receivable_addition',
+        title: `Penambahan piutang kepada ${receivable.borrower_name}`,
+        description: addition.description,
+        amount: addition.amount,
+        direction: '-',
+        transactionDate: addition.addition_date,
+        createdAt: addition.created_at
       })
     );
   }
@@ -160,15 +206,19 @@ async function loadHistorySource(userId) {
   const ownerId = resolveUserId(userId);
   const [
     debts,
+    debtAdditions,
     debtPayments,
     receivables,
+    receivableAdditions,
     receivablePayments,
     savings,
     savingsTransactions
   ] = await Promise.all([
     readUserRows(ownerId, 'debts'),
+    readUserRows(ownerId, 'debt_additions'),
     readUserRows(ownerId, 'debt_payments'),
     readUserRows(ownerId, 'receivables'),
+    readUserRows(ownerId, 'receivable_additions'),
     readUserRows(ownerId, 'receivable_payments'),
     readUserRows(ownerId, 'savings'),
     readUserRows(ownerId, 'savings_transactions')
@@ -176,8 +226,10 @@ async function loadHistorySource(userId) {
 
   return {
     debts,
+    debtAdditions,
     debtPayments,
     receivables,
+    receivableAdditions,
     receivablePayments,
     savings,
     savingsTransactions

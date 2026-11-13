@@ -1,8 +1,11 @@
 import { createLedgerPage } from './components/ledger.js';
 import {
+  addReceivablePrincipal,
   computeReceivableSummary,
   createReceivable,
   deleteReceivable,
+  listAllReceivablePayments,
+  listReceivableAdditions,
   listReceivablePayments,
   listReceivables,
   recordReceivablePayment,
@@ -29,6 +32,7 @@ const ledger = createLedgerPage({
     personLabel: 'Nama peminjam',
     personPlaceholder: 'Contoh: Siti Aminah',
     amountLabel: 'Nominal piutang',
+    initialAmountLabel: 'Nominal awal piutang',
     paidLabel: 'Sudah dikembalikan',
     remainingLabel: 'Sisa piutang',
     dateLabel: 'Tanggal piutang',
@@ -38,8 +42,26 @@ const ledger = createLedgerPage({
     paymentTitle: 'Catat Pengembalian Piutang',
     paymentDescription:
       'Pengembalian disimpan secara atomik di perangkat dan tidak dapat melebihi sisa piutang.',
+    principalAction: 'Tambah Pokok',
+    principalTitle: 'Tambah Pokok Piutang',
+    principalNoun: 'pokok piutang',
+    principalDescription:
+      'Nominal pokok akan ditambahkan ke catatan yang dipilih dan disimpan sebagai riwayat penambahan.',
+    profileTitle: 'Profil Peminjam',
+    profileAddAction: 'Catat Piutang Baru',
+    profileDescription:
+      'Semua piutang dan penambahan pokok untuk orang ini dikumpulkan dalam satu profil.',
+    profileHistoryTitle: 'Riwayat Piutang',
+    profileAdditionTitle: 'Riwayat Penambahan Pokok',
+    profileAdditionEmpty:
+      'Belum ada penambahan pokok. Tambahkan pokok dari salah satu catatan di atas.',
+    photoAction: 'Ubah Foto',
+    photoRemoveAction: 'Hapus Foto',
+    photoEmpty: 'Belum ada foto profil',
     historyTitle: 'Riwayat Pengembalian',
     historyEmpty: 'Belum ada pengembalian untuk piutang ini.',
+    additionHistoryTitle: 'Riwayat Penambahan Pokok',
+    additionHistoryEmpty: 'Belum ada penambahan pokok untuk piutang ini.',
     emptyTitle: 'Belum ada piutang',
     emptyDescription:
       'Catat uang yang kamu pinjamkan agar pengembaliannya mudah dipantau.',
@@ -54,6 +76,16 @@ const ledger = createLedgerPage({
     update: updateReceivable,
     remove: deleteReceivable,
     listPayments: listReceivablePayments,
+    listAllPayments: listAllReceivablePayments,
+    listAdditions: listReceivableAdditions,
+    addPrincipal: (userId, receivableId, payload) =>
+      addReceivablePrincipal({
+        userId,
+        receivableId,
+        amount: payload.amount,
+        additionDate: payload.additionDate,
+        description: payload.description
+      }),
     recordPayment: (userId, receivableId, payload) =>
       recordReceivablePayment({
         userId,
@@ -71,7 +103,10 @@ const ledger = createLedgerPage({
   },
   toForm: (record) => ({
     person: record.borrower_name,
-    amount: record.amount,
+    amount:
+      record.initial_amount === undefined
+        ? record.amount
+        : record.initial_amount,
     transactionDate: record.transaction_date,
     dueDate: record.due_date || '',
     description: record.description || ''
