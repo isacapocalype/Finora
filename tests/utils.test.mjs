@@ -12,6 +12,7 @@ import {
   getInitials,
   getStatusMeta,
   greetingForHour,
+  normalizeNameKey,
   parseDate,
   parseNumber,
   roundMoney,
@@ -112,9 +113,17 @@ test('greetingForHour memakai sapaan yang sesuai', () => {
   assert.equal(greetingForHour(21), 'Selamat malam');
 });
 
+test('normalizeNameKey menyamakan nama untuk pencocokan kontak', () => {
+  assert.equal(normalizeNameKey('  Budi   Santoso '), 'budi santoso');
+  assert.equal(normalizeNameKey('BUDI SANTOSO'), 'budi santoso');
+  assert.equal(normalizeNameKey(''), '');
+});
+
 test('metadata status dan kategori konsisten', () => {
   assert.equal(getStatusMeta('debt', 'paid').label, 'Lunas');
   assert.equal(getStatusMeta('receivable', 'partial').label, 'Dikembalikan sebagian');
   assert.equal(getCategoryMeta('debt_payment').label, 'Pembayaran utang');
+  assert.equal(getCategoryMeta('debt_addition').label, 'Penambahan utang');
+  assert.equal(getCategoryMeta('receivable_addition').label, 'Penambahan piutang');
   assert.equal(getCategoryMeta('unknown').label, 'Transaksi');
 });
